@@ -5,9 +5,12 @@ A web frontend for bridging **ATONE** and **PHOTON** tokens between **AtomOne**,
 ## Features
 
 - Bridge ATONE/PHOTON across AtomOne ↔ Ethereum ↔ Base
+- Bridge GNOT/GRC20 tokens across Gno.land ↔ EVM Chains (Coming soon)
+- Adena Wallet support (Gno.land) (Coming soon)
 - Keplr wallet support (AtomOne)
 - MetaMask / EVM wallet support (Ethereum, Base)
 - Live packet dashboard via Union GraphQL API
+
 
 ## Development
 
