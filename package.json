@@ -1,7 +1,9 @@
 {
-  "name": "bridge-web-app",
+  "name": "gnoswap-bridge",
   "version": "0.1.0",
   "private": true,
+  "description": "GnoSwap Bridge — bridge ATONE/PHOTON between AtomOne, Ethereum, and Base via Union protocol",
+  "repository": "https://github.com/gnoswap-labs/gnoswap-bridge",
   "license": "Apache-2.0",
   "dependencies": {
     "@cosmjs/amino": "^0.32.4",

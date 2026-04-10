@@ -1,51 +1,40 @@
-# Terra Bridge Web App
+# GnoSwap Bridge
 
-![banner](./terra-bridge.png)
+A web frontend for bridging **ATONE** and **PHOTON** tokens between **AtomOne**, **Ethereum**, and **Base** using the [Union protocol](https://union.build).
 
-The **Terra Bridge** is a web frontend that allows users to easily send Terra assets across supported blockchains via their respective bridges.
+## Features
 
-Users can connect their wallets to the Terra Bridge web app through a browser plugin for Chromium-based web browsers, as shown below:
+- Bridge ATONE/PHOTON across AtomOne ↔ Ethereum ↔ Base
+- Keplr wallet support (AtomOne)
+- MetaMask / EVM wallet support (Ethereum, Base)
+- Live packet dashboard via Union GraphQL API
 
-| Blockchain | Supported Wallets                                                                                                                                                                                                                          |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Terra      | [Station Extension](https://setup.station.money/)                                                                                                                                                                                   |
-| Ethereum   | [MetaMask](https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=en), [CoinBase](https://wallet.coinbase.com/) or [Trustwallet](https://trustwallet.com/) for [WalletConnect](https://walletconnect.org/) |
-| BSC        | [Binance Chain Wallet](https://chrome.google.com/webstore/detail/binance-chain-wallet/fhbohimaelbohpjbbldcngcnapndodjp?hl=en) or [MetaMask](https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=en)     |
+## Development
 
-## Instructions
-
-1. Install dependencies
+**Requirements:** Node.js 20+, [pnpm](https://pnpm.io)
 
 ```bash
-$ npm install
+# Install dependencies
+pnpm install
+
+# Start dev server
+pnpm dev
+
+# Production build
+pnpm build
+
+# Preview production build
+pnpm preview
 ```
 
-2. Run Bridge
+## Deployment
 
-```bash
-$ npm start
-```
-
-## Add a new IBC network
-
-1. Update `src/types/network.ts`:
-
-Add the chain to BlockChainType, IbcNetwork, isIbcNetwork, ibcChannels, ibcPrefix and allowedCoins
-
-2. Update `src/consts/network.ts`:
-
-Update blockChainImage and blockChainName
-
-3. Add the chain in `src/pages/Send/BlockChainNetwork.tsx`:
-
-Add the chain in the TO SelectBlockchain's array
-
-4. (optional) Add the chain token to the assets list:
-
-Make a PR to https://github.com/terra-money/assets/blob/master/ibc/tokens.js and add the chain native token, it's necessary if you want to send the token back to it's native chain
+Configured for [Vercel](https://vercel.com) (`vercel.json`).
 
 ## License
 
-This software is licensed under the Apache 2.0 license. Read more about it [here](./LICENSE).
+Apache-2.0 — see [LICENSE](./LICENSE).
 
-© 2021 Terra Bridge Web App
+> This project is a fork of [terra-money/bridge-web-app](https://github.com/terra-money/bridge-web-app),  
+> Copyright 2021 Terraform Labs, PTE. LTD., licensed under the Apache License, Version 2.0.  
+> See [NOTICE](./NOTICE) for details.

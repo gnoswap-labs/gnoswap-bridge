@@ -164,7 +164,7 @@ const Send = (): ReactElement => {
             <div style={{ marginTop: -40 }}>
               <div style={{ marginTop: -40 }}>
                 <InfoElement>
-                  AtomOne Bridge powered by Union protocol.
+                  GnoSwap Bridge powered by Union protocol.
                 </InfoElement>
               </div>
             </div>
