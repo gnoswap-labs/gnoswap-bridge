@@ -1,6 +1,8 @@
-# GnoSwap Bridge
+⚠️ This project is under development, forked from [terra-money/bridge-web-app](https://github.com/terra-money/bridge-web-app). Use at your own risk.
 
-A web frontend for bridging **ATONE** and **PHOTON** tokens between **AtomOne**, **Ethereum**, and **Base** using the [Union protocol](https://union.build).
+# Gno.land Bridge
+
+A web frontend for bridging GNOT, GRC20, ATONE, and PHOTON tokens between Gno.land, AtomOne, Ethereum, and Base using the [Union protocol](https://union.build).
 
 ## Features
 
