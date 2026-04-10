@@ -1,33 +1,6 @@
 import { ReactElement } from 'react'
-import styled from 'styled-components'
-
-import { STYLE } from 'consts'
 
 import { ExtLink, Text, Row, View, Container } from 'components'
-
-const StyledContainer = styled(Container)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 640px;
-  padding: 28px 0;
-  opacity: 0.5;
-  @media ${STYLE.media.mobile} {
-    width: auto;
-    margin-top: 0;
-    padding: 24px;
-  }
-`
-
-const StyledText = styled(Text)`
-  font-size: 14px;
-  font-weight: normal;
-  font-stretch: normal;
-  font-style: normal;
-  line-height: normal;
-  letter-spacing: -0.22px;
-`
 
 const Footer = (): ReactElement => {
   const community = [
@@ -49,7 +22,7 @@ const Footer = (): ReactElement => {
     },
   ]
   return (
-    <StyledContainer>
+    <Container className="flex flex-row items-center justify-between max-w-[640px] py-7 opacity-50 max-[575px]:w-auto max-[575px]:mt-0 max-[575px]:px-6">
       <Row
         style={{
           justifyContent: window.innerWidth > 575 ? 'space-between' : 'center',
@@ -61,7 +34,9 @@ const Footer = (): ReactElement => {
         }}
       >
         <View>
-          <StyledText>© Terraform Labs.</StyledText>
+          <Text className="text-sm font-normal tracking-[-0.22px]">
+            &copy; Terraform Labs.
+          </Text>
         </View>
         <Row
           style={{
@@ -84,14 +59,16 @@ const Footer = (): ReactElement => {
                       textTransform: 'uppercase',
                     }}
                   >
-                    <StyledText>{title}</StyledText>
+                    <Text className="text-sm font-normal tracking-[-0.22px]">
+                      {title}
+                    </Text>
                   </ExtLink>
                 </View>
               )
           )}
         </Row>
       </Row>
-    </StyledContainer>
+    </Container>
   )
 }
 

@@ -1,8 +1,11 @@
-import styled from 'styled-components'
-import View from './View'
+import { HTMLAttributes, forwardRef } from 'react'
 
-const StyledRow = styled(View)`
-  flex-direction: row;
-`
+const Row = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className = '', ...props }, ref) => {
+    return <div ref={ref} className={`flex flex-row ${className}`} {...props} />
+  }
+)
 
-export default StyledRow
+Row.displayName = 'Row'
+
+export default Row

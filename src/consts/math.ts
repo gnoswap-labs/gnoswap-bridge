@@ -1,5 +1,4 @@
 import BN from 'bignumber.js'
-import { isNil } from 'ramda'
 
 const plus = (a?: BN.Value, b?: BN.Value): string =>
   new BN(a || 0).plus(b || 0).toString()
@@ -41,9 +40,9 @@ const lt = (a: BN.Value, b: BN.Value): boolean => new BN(a).lt(b)
 const gte = (a: BN.Value, b: BN.Value): boolean => new BN(a).gte(b)
 const lte = (a: BN.Value, b: BN.Value): boolean => new BN(a).lte(b)
 
-const isFinite = (n?: BN.Value): boolean => !isNil(n) && new BN(n).isFinite()
+const isFinite = (n?: BN.Value): boolean => n != null && new BN(n).isFinite()
 
-const isInteger = (n?: BN.Value): boolean => !isNil(n) && new BN(n).isInteger()
+const isInteger = (n?: BN.Value): boolean => n != null && new BN(n).isInteger()
 
 export default {
   plus,

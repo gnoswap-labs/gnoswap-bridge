@@ -1,5 +1,4 @@
 import { useRecoilValue } from 'recoil'
-import _ from 'lodash'
 
 import AuthStore from 'store/AuthStore'
 
@@ -12,7 +11,7 @@ const useKeplrBalance = (): {
     whiteList: WhiteListType
   }) => Promise<BalanceListType>
 } => {
-  const loginUser = useRecoilValue(AuthStore.loginUser)
+  const cosmosWallet = useRecoilValue(AuthStore.cosmosWallet)
 
   const getKeplrBalance = async ({
     token,
@@ -22,7 +21,9 @@ const useKeplrBalance = (): {
     userAddress: string
   }): Promise<string> => {
     return await (
-      (await loginUser.signer?.getBalance(userAddress, token)) || { amount: 0 }
+      (await cosmosWallet?.signer?.getBalance(userAddress, token)) || {
+        amount: 0,
+      }
     ).amount.toString()
   }
 
@@ -31,10 +32,10 @@ const useKeplrBalance = (): {
   }: {
     whiteList: WhiteListType
   }): Promise<BalanceListType> => {
-    const userAddress = loginUser.address
+    const userAddress = cosmosWallet?.address || ''
     const list: BalanceListType = {}
     await Promise.all(
-      _.map(whiteList, async (token) => {
+      whiteList.map(async (token) => {
         const balance = await getKeplrBalance({
           token,
           userAddress,

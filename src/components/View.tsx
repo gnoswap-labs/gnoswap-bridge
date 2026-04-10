@@ -1,8 +1,11 @@
-import styled from 'styled-components'
+import { HTMLAttributes, forwardRef } from 'react'
 
-const StyledView = styled.div`
-  display: flex;
-  flex-direction: column;
-`
+const View = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className = '', ...props }, ref) => {
+    return <div ref={ref} className={`flex flex-col ${className}`} {...props} />
+  }
+)
 
-export default StyledView
+View.displayName = 'View'
+
+export default View

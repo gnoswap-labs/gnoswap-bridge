@@ -1,19 +1,19 @@
-import { ethers } from 'ethers'
-
-// just request transaction, it's not finished
 export type RequestTxResultType =
   | {
       success: true
       hash: string
+      packetHash?: string
     }
   | {
       success: false
       errorMessage?: string
     }
 
-export type TerraReceiptResultType = {}
-
-export type EtherBaseReceiptResultType = ethers.providers.TransactionReceipt
+export type PacketStatus =
+  | 'PACKET_SEND'
+  | 'PACKET_RECV'
+  | 'WRITE_ACK'
+  | 'PACKET_ACK'
 
 export type ValidateItemResultType = {
   isValid: boolean
@@ -25,7 +25,5 @@ export type ValidateResultType = {
   errorMessage?: {
     toAddress?: string
     amount?: string
-    memo?: string
-    asset?: string
   }
 }

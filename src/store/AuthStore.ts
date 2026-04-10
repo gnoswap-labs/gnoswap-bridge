@@ -1,38 +1,43 @@
 import { atom, selector } from 'recoil'
-import _ from 'lodash'
 
-import { User } from 'types/auth'
-import { WalletEnum } from 'types/wallet'
+import { CosmosWallet, EvmWallet } from 'types/auth'
+import { isCosmosChain } from 'types/network'
 
-import NetworkStore from './NetworkStore'
+import SendStore from './SendStore'
 
-export const initLoginUser: User = {
-  address: '',
-  walletType: WalletEnum.TerraExtension,
-}
+const cosmosWallet = atom<CosmosWallet | null>({
+  key: 'cosmosWallet',
+  default: null,
+  dangerouslyAllowMutability: true,
+})
 
-const loginUser = atom<User>({
-  key: 'loginUser',
-  default: initLoginUser,
+const evmWallet = atom<EvmWallet | null>({
+  key: 'evmWallet',
+  default: null,
   dangerouslyAllowMutability: true,
 })
 
 const isLoggedIn = selector({
   key: 'isLoggedIn',
-  get: ({ get }) => {
-    const user = get(loginUser)
-    const etherBaseExt = get(NetworkStore.etherBaseExt)
-    const terraExt = get(NetworkStore.terraExt)
-    const keplrExt = get(NetworkStore.keplrExt)
+  get: ({ get }): boolean => {
+    const fromBlockChain = get(SendStore.fromBlockChain)
+    if (isCosmosChain(fromBlockChain)) {
+      return !!get(cosmosWallet)
+    }
+    return !!get(evmWallet)
+  },
+})
 
-    return (
-      _.some(user && user.address) &&
-      _.some(etherBaseExt || terraExt || user.terraWalletConnect || keplrExt)
-    )
+const isFullyConnected = selector({
+  key: 'isFullyConnected',
+  get: ({ get }): boolean => {
+    return !!get(cosmosWallet) && !!get(evmWallet)
   },
 })
 
 export default {
-  loginUser,
+  cosmosWallet,
+  evmWallet,
   isLoggedIn,
+  isFullyConnected,
 }

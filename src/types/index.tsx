@@ -1,4 +1,3 @@
-export * from './contracts'
 export * from './common'
 export * from './network'
 export * from './asset'

@@ -1,7 +1,6 @@
 import { ReactElement, useState } from 'react'
-import styled from 'styled-components'
 import useClipboard from 'react-use-clipboard'
-import { Check } from 'react-bootstrap-icons'
+import { Check } from 'components/icons'
 
 import { COLOR, NETWORK } from 'consts'
 import copyClipboardPng from 'images/copy_clipboard.png'
@@ -11,15 +10,6 @@ import Text from './Text'
 import View from './View'
 import FormImage from './FormImage'
 import { BlockChainType } from 'types/network'
-
-const StyledContainer = styled(Row)`
-  cursor: pointer;
-  padding: 3px 8px;
-  border-radius: 10px;
-  background-color: #2e2e2e;
-  align-items: center;
-  width: auto;
-`
 
 const CopyTokenAddressButton = ({
   blockChain,
@@ -32,7 +22,8 @@ const CopyTokenAddressButton = ({
   const [, setCopied] = useClipboard(value)
 
   return (
-    <StyledContainer
+    <Row
+      className="cursor-pointer py-[3px] px-2 rounded-[10px] bg-bridge-gray items-center w-auto"
       onClick={(): void => {
         if (isCopied) {
           return
@@ -54,7 +45,7 @@ const CopyTokenAddressButton = ({
       <Text style={{ fontSize: 11, color: '#737373', alignItems: 'center' }}>
         {NETWORK.blockChainName[blockChain]}
       </Text>
-    </StyledContainer>
+    </Row>
   )
 }
 

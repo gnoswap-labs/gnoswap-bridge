@@ -1,141 +1,87 @@
-import { SigningStargateClient } from '@cosmjs/stargate'
-import _ from 'lodash'
-import { BlockChainType, ibcChainId, IbcNetwork, ibcRpc } from 'types'
-import { NETWORK } from 'consts'
+import { SigningStargateClient, GasPrice } from '@cosmjs/stargate'
+import {
+  BlockChainType,
+  ATOMONE_CHAIN_ID,
+  ATOMONE_RPC,
+  ATOMONE_BECH32_PREFIX,
+} from 'types/network'
+
+declare global {
+  interface Window {
+    keplr: any
+  }
+}
 
 const checkInstalled = (): boolean => {
-  return _.some(window.keplr)
+  return !!window.keplr
 }
 
 const connect = async (
-  chain: BlockChainType
+  _chain: BlockChainType
 ): Promise<{
   address: string
   signingCosmosClient: SigningStargateClient
 }> => {
   const keplr = window.keplr
-  const CHAIN_ID = ibcChainId[chain as IbcNetwork]
+  const chainId = ATOMONE_CHAIN_ID
 
-  // suggest network (needed for injective since it's not in the default chains)
-  if (chain === BlockChainType.inj && keplr.experimentalSuggestChain) {
+  if (keplr.experimentalSuggestChain) {
     try {
       await keplr.experimentalSuggestChain({
-        chainId: CHAIN_ID,
-        chainName: NETWORK.blockChainName[chain],
-        rpc: ibcRpc[chain],
-        rest: 'https://lcd.injective.network/',
-        bip44: { coinType: 529 },
-        coinType: 529,
-        stakeCurrency: {
-          coinDenom: 'INJ',
-          coinMinimalDenom: 'inj',
-          coinDecimals: 18,
-        },
-        bech32Config: {
-          bech32PrefixAccAddr: 'inj',
-          bech32PrefixAccPub: 'injpub',
-          bech32PrefixValAddr: 'injvaloper',
-          bech32PrefixValPub: 'injvaloperpub',
-          bech32PrefixConsAddr: 'injvalcons',
-          bech32PrefixConsPub: 'injvalconspub',
-        },
-        currencies: [
-          { coinDenom: 'INJ', coinMinimalDenom: 'inj', coinDecimals: 18 },
-        ],
-        feeCurrencies: [
-          { coinDenom: 'INJ', coinMinimalDenom: 'inj', coinDecimals: 18 },
-        ],
-        gasPriceStep: { low: 500000000, average: 500000000, high: 500000000 },
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  } else if (
-    chain === BlockChainType.kujira &&
-    keplr.experimentalSuggestChain
-  ) {
-    try {
-      await keplr.experimentalSuggestChain({
-        chainId: CHAIN_ID,
-        chainName: NETWORK.blockChainName[chain],
-        rpc: ibcRpc[chain],
-        rest: 'https://lcd.kaiyo.kujira.setten.io/',
+        chainId,
+        chainName: 'AtomOne',
+        rpc: ATOMONE_RPC,
+        rest: 'https://atomone-api.allinbits.com/',
         bip44: { coinType: 118 },
         coinType: 118,
         stakeCurrency: {
-          coinDenom: 'KUJI',
-          coinMinimalDenom: 'ukuji',
+          coinDenom: 'ATONE',
+          coinMinimalDenom: 'uatone',
           coinDecimals: 6,
         },
         bech32Config: {
-          bech32PrefixAccAddr: 'kujira',
-          bech32PrefixAccPub: 'kujirapub',
-          bech32PrefixValAddr: 'kujiravaloper',
-          bech32PrefixValPub: 'kujiravaloperpub',
-          bech32PrefixConsAddr: 'kujiravalcons',
-          bech32PrefixConsPub: 'kujiravalconspub',
+          bech32PrefixAccAddr: ATOMONE_BECH32_PREFIX,
+          bech32PrefixAccPub: `${ATOMONE_BECH32_PREFIX}pub`,
+          bech32PrefixValAddr: `${ATOMONE_BECH32_PREFIX}valoper`,
+          bech32PrefixValPub: `${ATOMONE_BECH32_PREFIX}valoperpub`,
+          bech32PrefixConsAddr: `${ATOMONE_BECH32_PREFIX}valcons`,
+          bech32PrefixConsPub: `${ATOMONE_BECH32_PREFIX}valconspub`,
         },
         currencies: [
-          { coinDenom: 'KUJI', coinMinimalDenom: 'ukuji', coinDecimals: 6 },
+          { coinDenom: 'ATONE', coinMinimalDenom: 'uatone', coinDecimals: 6 },
+          {
+            coinDenom: 'PHOTON',
+            coinMinimalDenom: 'uphoton',
+            coinDecimals: 6,
+          },
         ],
         feeCurrencies: [
-          { coinDenom: 'KUJI', coinMinimalDenom: 'ukuji', coinDecimals: 6 },
+          {
+            coinDenom: 'PHOTON',
+            coinMinimalDenom: 'uphoton',
+            coinDecimals: 6,
+          },
         ],
-        gasPriceStep: { low: 0.01, average: 0.025, high: 0.03 },
+        gasPriceStep: { low: 0.001, average: 0.0025, high: 0.004 },
       })
     } catch (error) {
-      console.error(error)
-    }
-  } else if (
-    chain === BlockChainType.migaloo &&
-    keplr.experimentalSuggestChain
-  ) {
-    try {
-      await keplr.experimentalSuggestChain({
-        chainId: CHAIN_ID,
-        chainName: NETWORK.blockChainName[chain],
-        rpc: ibcRpc[chain],
-        rest: 'https://migaloo-api.polkachu.com/',
-        bip44: { coinType: 118 },
-        coinType: 118,
-        stakeCurrency: {
-          coinDenom: 'WHALE',
-          coinMinimalDenom: 'uwhale',
-          coinDecimals: 6,
-        },
-        bech32Config: {
-          bech32PrefixAccAddr: 'migaloo',
-          bech32PrefixAccPub: 'migaloopub',
-          bech32PrefixValAddr: 'migaloovaloper',
-          bech32PrefixValPub: 'migaloovaloperpub',
-          bech32PrefixConsAddr: 'migaloovalcons',
-          bech32PrefixConsPub: 'migaloovalconspub',
-        },
-        currencies: [
-          { coinDenom: 'WHALE', coinMinimalDenom: 'uwhale', coinDecimals: 6 },
-        ],
-        feeCurrencies: [
-          { coinDenom: 'WHALE', coinMinimalDenom: 'uwhale', coinDecimals: 6 },
-        ],
-        gasPriceStep: { low: 0, average: 0.025, high: 0.03 },
-      })
-    } catch (error) {
-      console.error(error)
+      console.error('Failed to suggest AtomOne chain:', error)
     }
   }
 
-  keplr.enable(CHAIN_ID)
-  const keplrOfflineSigner = await keplr.getOfflineSignerAuto(CHAIN_ID)
+  await keplr.enable(chainId)
+  const keplrOfflineSigner = await keplr.getOfflineSignerAuto(chainId)
   const accounts = await keplrOfflineSigner.getAccounts()
   const address = accounts[0].address
 
   const signingCosmosClient = await SigningStargateClient.connectWithSigner(
-    ibcRpc[chain as IbcNetwork],
-    keplrOfflineSigner
+    ATOMONE_RPC,
+    keplrOfflineSigner,
+    { gasPrice: GasPrice.fromString('0.0025uphoton') }
   )
 
-  // @ts-expect-error
-  signingCosmosClient.chainId = CHAIN_ID
+  // @ts-expect-error attach chainId for reference
+  signingCosmosClient.chainId = chainId
 
   return { address, signingCosmosClient }
 }

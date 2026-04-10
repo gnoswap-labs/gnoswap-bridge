@@ -1,29 +1,10 @@
 import { ReactElement } from 'react'
-import styled from 'styled-components'
 import { useRecoilValue } from 'recoil'
 
 import { Text, View } from 'components'
 import SendProcessStore, { ProcessStatus } from 'store/SendProcessStore'
 import FormImage from 'components/FormImage'
 import btn_back from 'images/btn_back.png'
-
-const StyledContainer = styled(View)`
-  position: relative;
-  align-items: center;
-`
-
-const StyledFormTitle = styled(Text)`
-  margin-bottom: 42px;
-  height: 24px;
-  font-size: 20px;
-  font-weight: 500;
-  font-stretch: normal;
-  font-style: normal;
-  line-height: normal;
-  letter-spacing: -0.31px;
-  justify-content: center;
-  color: #ffffff;
-`
 
 const FormTitleText: Record<ProcessStatus, string> = {
   [ProcessStatus.Input]: 'Send',
@@ -51,10 +32,12 @@ const FormTitle = ({
     )
   }
   return (
-    <StyledContainer>
+    <View className="relative items-center">
       {status === ProcessStatus.Confirm && <GoBackButton />}
-      <StyledFormTitle>{FormTitleText[status]}</StyledFormTitle>
-    </StyledContainer>
+      <Text className="mb-[42px] h-6 text-xl font-medium leading-normal tracking-[-0.31px] justify-center text-white">
+        {FormTitleText[status]}
+      </Text>
+    </View>
   )
 }
 

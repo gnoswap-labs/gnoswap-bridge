@@ -1,145 +1,94 @@
 import { useRecoilValue, useSetRecoilState } from 'recoil'
-import _ from 'lodash'
 import BigNumber from 'bignumber.js'
 
-import { ASSET, NETWORK } from 'consts'
-import AuthStore from 'store/AuthStore'
+import { ASSET } from 'consts'
 import SendStore from 'store/SendStore'
-
-import { AssetType, WhiteListType, BalanceListType } from 'types/asset'
-import { BlockChainType, isIbcNetwork } from 'types/network'
-
-import useTerraBalance from './useTerraBalance'
-import useEtherBaseBalance from './useEtherBaseBalance'
-import useKeplrBalance from './useKeplrBalance'
 import ContractStore from 'store/ContractStore'
-import useWhiteList from './useWhiteList'
+import AuthStore from 'store/AuthStore'
+
+import { SUPPORTED_ASSETS, ASSET_DECIMALS, AssetType } from 'types/asset'
+import { BlockChainType, isCosmosChain, isEvmChain } from 'types/network'
+import routes from 'consts/routes.json'
+
+import useKeplrBalance from './useKeplrBalance'
+import useEtherBaseBalance from './useEtherBaseBalance'
 
 const useAsset = (): {
   getAssetList: () => Promise<void>
   formatBalance: (balance: string | BigNumber, coin?: string) => string
   getDecimals: (coin?: string) => number
 } => {
-  const isLoggedIn = useRecoilValue(AuthStore.isLoggedIn)
+  const asset = useRecoilValue(SendStore.asset)
+  const setAsset = useSetRecoilState(SendStore.asset)
+  const setAssetList = useSetRecoilState(ContractStore.assetList)
   const fromBlockChain = useRecoilValue(SendStore.fromBlockChain)
   const toBlockChain = useRecoilValue(SendStore.toBlockChain)
-  const asset = useRecoilValue(SendStore.asset)
+  const cosmosWallet = useRecoilValue(AuthStore.cosmosWallet)
+  const evmWallet = useRecoilValue(AuthStore.evmWallet)
 
-  const assetList = useRecoilValue(ContractStore.assetList)
-  const terraWhiteList = useRecoilValue(ContractStore.terraWhiteList)
-
-  const whiteList = useWhiteList()
-
-  const setAssetList = useSetRecoilState(SendStore.loginUserAssetList)
-
-  const { getTerraBalances } = useTerraBalance()
-  const { getEtherBalances } = useEtherBaseBalance()
   const { getKeplrBalances } = useKeplrBalance()
-
-  const setBalanceToAssetList = ({
-    assetList,
-    whiteList,
-    balanceList,
-  }: {
-    assetList: AssetType[]
-    whiteList: WhiteListType
-    balanceList: BalanceListType
-  }): AssetType[] => {
-    if (_.some(balanceList)) {
-      return _.reduce<AssetType, AssetType[]>(
-        assetList,
-        (arr, asset) => {
-          const tokenAddress =
-            fromBlockChain === BlockChainType.terra
-              ? asset.terraToken
-              : whiteList[asset.terraToken]
-          return whiteList[asset.terraToken] || fromBlockChain === toBlockChain
-            ? [
-                ...arr,
-                {
-                  ...asset,
-                  balance: balanceList[tokenAddress],
-                },
-              ]
-            : arr
-        },
-        []
-      )
-    }
-    return _.reduce<AssetType, AssetType[]>(
-      assetList,
-      (arr, asset) => {
-        return whiteList[asset.terraToken] || fromBlockChain === toBlockChain
-          ? [
-              ...arr,
-              {
-                ...asset,
-              },
-            ]
-          : arr
-      },
-      []
-    )
-  }
+  const { getEtherBalances } = useEtherBaseBalance()
 
   const getAssetList = async (): Promise<void> => {
-    let balanceList: BalanceListType = {}
-    if (isLoggedIn && whiteList) {
-      if (fromBlockChain === BlockChainType.terra) {
-        let balanceWhiteList = _.map(terraWhiteList, (token) => ({ token }))
+    let updatedAssets: AssetType[] = SUPPORTED_ASSETS.map((a) => ({
+      ...a,
+      balance: undefined,
+    }))
 
-        balanceWhiteList = balanceWhiteList.filter(({ token }): boolean => {
-          return (
-            token.startsWith('terra1') &&
-            (!!whiteList[token] || fromBlockChain === toBlockChain)
-          )
-        })
+    try {
+      if (isCosmosChain(fromBlockChain) && cosmosWallet) {
+        const whiteList = SUPPORTED_ASSETS.map((a) => a.denom)
+        const balances = await getKeplrBalances({ whiteList })
+        updatedAssets = SUPPORTED_ASSETS.map((a) => ({
+          ...a,
+          balance: balances[a.denom] || '0',
+        }))
+      } else if (isEvmChain(fromBlockChain) && evmWallet) {
+        const srcName =
+          fromBlockChain === BlockChainType.ethereum ? 'Ethereum' : 'Base'
+        const denomToContract: Record<string, string> = {}
+        for (const r of routes) {
+          if (r.src === srcName && r.baseToken.startsWith('0x')) {
+            denomToContract[r.denom] = r.baseToken
+          }
+        }
 
-        balanceList = await getTerraBalances(balanceWhiteList)
-      } else if (NETWORK.isEtherBaseBlockChain(fromBlockChain)) {
-        balanceList = await getEtherBalances({ whiteList })
-      } else if (isIbcNetwork(fromBlockChain)) {
-        balanceList = await getKeplrBalances({ whiteList })
+        const contractAddresses = Object.values(denomToContract)
+        if (contractAddresses.length > 0) {
+          const balances = await getEtherBalances({
+            whiteList: contractAddresses,
+          })
+          updatedAssets = SUPPORTED_ASSETS.map((a) => {
+            const contract = denomToContract[a.denom]
+            return {
+              ...a,
+              balance: contract ? balances[contract] || '0' : '0',
+            }
+          })
+        }
       }
+    } catch (e) {
+      console.error('Failed to fetch balances:', e)
     }
 
-    const fromList = setBalanceToAssetList({
-      assetList,
-      whiteList,
-      balanceList,
-    })
+    setAssetList(updatedAssets)
 
-    const pairList = _.map(fromList, (item) => {
-      const disabled =
-        _.isEmpty(whiteList[item.terraToken]) && fromBlockChain !== toBlockChain
-      return {
-        ...item,
-        disabled,
-      }
-    }).filter((item) => !item.disabled)
-
-    setAssetList(pairList)
+    const currentDenom = asset?.denom
+    const selectedAsset = currentDenom
+      ? updatedAssets.find((a) => a.denom === currentDenom) || updatedAssets[0]
+      : updatedAssets[0]
+    setAsset(selectedAsset)
   }
 
   const getDecimals = (coin?: string): number => {
-    // WBTC: 8 decimals
-    if (
-      (coin || asset?.terraToken) ===
-      'ibc/05D299885B07905B6886F554B39346EA6761246076A1120B1950049B92B922DD'
-    ) {
-      return ASSET.BTC_DECIMAL
+    const denom = coin || asset?.denom
+    if (denom) {
+      const decimals = ASSET_DECIMALS[denom as keyof typeof ASSET_DECIMALS]
+      if (decimals !== undefined) {
+        return Math.pow(10, decimals)
+      }
     }
-
-    // WETH: 18 decimals
-    if (
-      (coin || asset?.terraToken) ===
-      'ibc/BC8A77AFBD872FDC32A348D3FB10CC09277C266CFE52081DE341C7EC6752E674'
-    ) {
-      return ASSET.ETHER_BASE_DECIMAL
-    }
-
-    // default
-    return ASSET.TERRA_DECIMAL
+    return ASSET.ATOMONE_DECIMAL
   }
 
   const formatBalance = (
@@ -150,10 +99,11 @@ const useAsset = (): {
       const bnBalance =
         typeof balance === 'string' ? new BigNumber(balance) : balance
 
+      const decimals = getDecimals(coin)
       return bnBalance
-        .div(getDecimals(coin) / ASSET.TERRA_DECIMAL)
+        .div(decimals / ASSET.ATOMONE_DECIMAL)
         .integerValue(BigNumber.ROUND_DOWN)
-        .div(ASSET.TERRA_DECIMAL)
+        .div(ASSET.ATOMONE_DECIMAL)
         .dp(6)
         .toString(10)
     }

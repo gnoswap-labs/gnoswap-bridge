@@ -1,27 +1,16 @@
 import { ReactElement, useEffect, useState } from 'react'
-import styled from 'styled-components'
 import { BrowserRouter } from 'react-router-dom'
-import routes from 'routes'
+import AppRoutes from '../routes'
 import { QueryClient, QueryClientProvider } from 'react-query'
 
 import Header from 'components/layouts/Header'
-import Footer from 'components/layouts/Footer'
 import SelectWalletModal from './SelectWalletModal'
-import TerraExtensionDownModal from './TerraExtensionDownModal'
-import BscExtensionDownModal from './BscExtensionDownModal'
 import KeplrDownModal from './KeplrDownModal'
-import NotSupportNetworkModal from './NotSupportNetworkModal'
 import NetworkErrorScreen from './NetworkErrorScreen'
-import UnderMaintenance from './UnderMaintenance'
 
 import useApp from './useApp'
 
 const queryClient = new QueryClient()
-
-const StyledContainer = styled.div`
-  color: white;
-  min-height: 100%;
-`
 
 const App = (): ReactElement => {
   const [initComplete, setInitComplete] = useState(false)
@@ -38,18 +27,13 @@ const App = (): ReactElement => {
       <BrowserRouter>
         {initComplete && (
           <>
-            <StyledContainer>
+            <div className="text-white min-h-full">
               <Header />
-              {routes()}
-              <Footer />
-            </StyledContainer>
+              <AppRoutes />
+            </div>
             <SelectWalletModal />
-            <TerraExtensionDownModal />
-            <BscExtensionDownModal />
             <KeplrDownModal />
-            <NotSupportNetworkModal />
             <NetworkErrorScreen />
-            <UnderMaintenance />
           </>
         )}
       </BrowserRouter>

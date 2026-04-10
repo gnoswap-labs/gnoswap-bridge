@@ -1,11 +1,12 @@
 import { useRecoilValue } from 'recoil'
-import _ from 'lodash'
+import { createPublicClient, custom, erc20Abi } from 'viem'
+import { mainnet, base } from 'viem/chains'
 
 import AuthStore from 'store/AuthStore'
+import SendStore from 'store/SendStore'
 
 import { WhiteListType, BalanceListType } from 'types/asset'
-
-import useEtherBaseContract from './useEtherBaseContract'
+import { BlockChainType, isEvmChain } from 'types/network'
 
 const useEtherBaseBalance = (): {
   getEtherBalances: ({
@@ -14,46 +15,46 @@ const useEtherBaseBalance = (): {
     whiteList: WhiteListType
   }) => Promise<BalanceListType>
 } => {
-  const { getEtherBaseContract } = useEtherBaseContract()
-  const loginUser = useRecoilValue(AuthStore.loginUser)
-  const getEtherBalance = async ({
-    token,
-    userAddress,
-  }: {
-    token: string
-    userAddress: string
-  }): Promise<string> => {
-    const contract = getEtherBaseContract({ token })
-
-    if (contract) {
-      const fn = contract['balanceOf']
-      const balance = await fn?.(userAddress)
-      return balance?.toString() ?? '0'
-    }
-    return ''
-  }
+  const evmWallet = useRecoilValue(AuthStore.evmWallet)
+  const fromBlockChain = useRecoilValue(SendStore.fromBlockChain)
 
   const getEtherBalances = async ({
     whiteList,
   }: {
     whiteList: WhiteListType
   }): Promise<BalanceListType> => {
-    const userAddress = loginUser.address
+    const userAddress = evmWallet?.address
+    if (!userAddress || !isEvmChain(fromBlockChain)) {
+      return {}
+    }
+
+    const chain = fromBlockChain === BlockChainType.base ? base : mainnet
+    const publicClient = createPublicClient({
+      chain,
+      transport: custom(window.ethereum!),
+    })
+
     const list: BalanceListType = {}
     await Promise.all(
-      _.map(whiteList, async (token) => {
-        const balance = await getEtherBalance({
-          token,
-          userAddress,
-        })
-        list[token] = balance
+      whiteList.map(async (token) => {
+        try {
+          const balance = await publicClient.readContract({
+            address: token as `0x${string}`,
+            abi: erc20Abi,
+            functionName: 'balanceOf',
+            args: [userAddress as `0x${string}`],
+          })
+          list[token] = balance.toString()
+        } catch (e) {
+          console.error(`Failed to fetch balance for ${token}:`, e)
+          list[token] = '0'
+        }
       })
     )
     return list
   }
-  return {
-    getEtherBalances,
-  }
+
+  return { getEtherBalances }
 }
 
 export default useEtherBaseBalance

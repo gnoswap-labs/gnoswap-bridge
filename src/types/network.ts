@@ -1,247 +1,40 @@
 export enum BlockChainType {
-  terra = 'terra',
+  atomone = 'atomone',
   ethereum = 'ethereum',
-  bsc = 'bsc',
-  osmo = 'osmosis',
-  scrt = 'secret',
-  inj = 'injective',
-  axelar = 'axelar',
-  avalanche = 'avalanche',
-  fantom = 'fantom',
-  cosmos = 'cosmos',
-  polygon = 'polygon',
-  moonbeam = 'moonbeam',
-  juno = 'juno',
-  crescent = 'crescent',
-  kujira = 'kujira',
-  carbon = 'carbon',
-  stride = 'stride',
-  migaloo = 'migaloo',
+  base = 'base',
 }
 
 export enum BridgeType {
-  wormhole = 'wormhole',
-  ibc = 'ibc',
-  axelar = 'axelar',
+  union = 'union',
 }
 
 export const availableBridges: Record<BlockChainType, BridgeType[]> = {
-  [BlockChainType.osmo]: [BridgeType.ibc],
-  [BlockChainType.scrt]: [BridgeType.ibc],
-  [BlockChainType.inj]: [BridgeType.ibc],
-  [BlockChainType.axelar]: [BridgeType.ibc],
-  [BlockChainType.cosmos]: [BridgeType.ibc],
-  [BlockChainType.juno]: [BridgeType.ibc],
-  [BlockChainType.kujira]: [BridgeType.ibc, BridgeType.axelar],
-  [BlockChainType.crescent]: [BridgeType.ibc],
-  [BlockChainType.carbon]: [BridgeType.ibc],
-  [BlockChainType.stride]: [BridgeType.ibc],
-  [BlockChainType.migaloo]: [BridgeType.ibc],
-  [BlockChainType.ethereum]: [BridgeType.axelar],
-  [BlockChainType.avalanche]: [BridgeType.axelar],
-
-  // disabled
-  [BlockChainType.bsc]: [],
-  [BlockChainType.fantom]: [BridgeType.wormhole, BridgeType.axelar],
-  [BlockChainType.polygon]: [BridgeType.wormhole, BridgeType.axelar],
-  [BlockChainType.moonbeam]: [BridgeType.axelar],
-  [BlockChainType.terra]: [],
+  [BlockChainType.atomone]: [BridgeType.union],
+  [BlockChainType.ethereum]: [BridgeType.union],
+  [BlockChainType.base]: [BridgeType.union],
 }
 
 export function getDefaultBridge(
-  from: BlockChainType,
-  to: BlockChainType
-): BridgeType | undefined {
-  const chain = from === BlockChainType.terra ? to : from
-  return availableBridges[chain][0]
+  _from: BlockChainType,
+  _to: BlockChainType
+): BridgeType {
+  return BridgeType.union
 }
 
-export type IbcNetwork =
-  | BlockChainType.osmo
-  | BlockChainType.scrt
-  | BlockChainType.inj
-  | BlockChainType.axelar
-  | BlockChainType.cosmos
-  | BlockChainType.juno
-  | BlockChainType.crescent
-  | BlockChainType.kujira
-  | BlockChainType.carbon
-  | BlockChainType.stride
-  | BlockChainType.migaloo
-
-export function isIbcNetwork(network: BlockChainType): boolean {
-  return [
-    BlockChainType.osmo,
-    BlockChainType.scrt,
-    BlockChainType.inj,
-    BlockChainType.axelar,
-    BlockChainType.cosmos,
-    BlockChainType.juno,
-    BlockChainType.crescent,
-    BlockChainType.kujira,
-    BlockChainType.carbon,
-    BlockChainType.stride,
-    BlockChainType.migaloo,
-  ].includes(network)
+export function isCosmosChain(chain: BlockChainType): boolean {
+  return chain === BlockChainType.atomone
 }
 
-// channels Terra -> IBC chain
-export const terraIbcChannels: Record<IbcNetwork, string> = {
-  [BlockChainType.osmo]: 'channel-1',
-  [BlockChainType.scrt]: 'channel-3',
-  [BlockChainType.inj]: 'channel-', // TODO: update inj channel
-  [BlockChainType.axelar]: 'channel-6',
-  [BlockChainType.cosmos]: 'channel-0',
-  [BlockChainType.juno]: 'channel-2',
-  [BlockChainType.crescent]: 'channel-37',
-  [BlockChainType.kujira]: 'channel-10',
-  [BlockChainType.carbon]: 'channel-36',
-  [BlockChainType.stride]: 'channel-46',
-  [BlockChainType.migaloo]: 'channel-86',
+export function isEvmChain(chain: BlockChainType): boolean {
+  return chain === BlockChainType.ethereum || chain === BlockChainType.base
 }
 
-export type IcsNetwork =
-  | BlockChainType.osmo
-  | BlockChainType.juno
-  | BlockChainType.kujira
-  | BlockChainType.carbon
-  | BlockChainType.migaloo
+export const ATOMONE_CHAIN_ID = 'atomone-1'
+export const ATOMONE_RPC = 'https://atomone-rpc.allinbits.com/'
+export const ATOMONE_API = 'https://atomone-api.allinbits.com/'
+export const ATOMONE_BECH32_PREFIX = 'atone'
 
-// channels IBC chain -> Axelar
-export const axelarIbcChannels: Record<string, string> = {
-  [BlockChainType.kujira]: 'channel-9',
-}
-
-// channels IBC chain -> Terra
-export const ibcChannels: Record<IbcNetwork, string> = {
-  [BlockChainType.osmo]: 'channel-251',
-  [BlockChainType.scrt]: 'channel-16',
-  [BlockChainType.inj]: 'channel-', // TODO: update inj channel
-  [BlockChainType.axelar]: 'channel-11',
-  [BlockChainType.cosmos]: 'channel-339',
-  [BlockChainType.juno]: 'channel-86',
-  [BlockChainType.crescent]: 'channel-27',
-  [BlockChainType.kujira]: 'channel-5',
-  [BlockChainType.carbon]: 'channel-12',
-  [BlockChainType.stride]: 'channel-52',
-  [BlockChainType.migaloo]: 'channel-0',
-}
-
-// channels Terra -> IBC chain
-export const terraIcsChannels: Record<
-  IcsNetwork,
-  { contract?: string; channel: string }
-> = {
-  [BlockChainType.osmo]: {
-    channel: 'channel-26',
-    contract:
-      'terra1e0mrzy8077druuu42vs0hu7ugguade0cj65dgtauyaw4gsl4kv0qtdf2au',
-  },
-  [BlockChainType.kujira]: {
-    channel: 'channel-28',
-    contract:
-      'terra1e0mrzy8077druuu42vs0hu7ugguade0cj65dgtauyaw4gsl4kv0qtdf2au',
-  },
-  [BlockChainType.juno]: {
-    channel: 'channel-32',
-    contract:
-      'terra1e0mrzy8077druuu42vs0hu7ugguade0cj65dgtauyaw4gsl4kv0qtdf2au',
-  },
-  [BlockChainType.carbon]: {
-    channel: 'channel-41',
-    contract:
-      'terra1e0mrzy8077druuu42vs0hu7ugguade0cj65dgtauyaw4gsl4kv0qtdf2au',
-  },
-  [BlockChainType.migaloo]: {
-    channel: 'channel-87',
-    contract:
-      'terra1e0mrzy8077druuu42vs0hu7ugguade0cj65dgtauyaw4gsl4kv0qtdf2au',
-  },
-}
-
-// channels IBC chain -> Terra
-export const icsChannels: Record<
-  IcsNetwork,
-  { contract?: string; channel: string }
-> = {
-  [BlockChainType.osmo]: {
-    channel: 'channel-341',
-  },
-  [BlockChainType.kujira]: {
-    channel: 'channel-36',
-  },
-  [BlockChainType.juno]: {
-    channel: 'channel-153',
-    contract: 'juno1v4887y83d6g28puzvt8cl0f3cdhd3y6y9mpysnsp3k8krdm7l6jqgm0rkn',
-  },
-  [BlockChainType.carbon]: {
-    channel: 'channel-16',
-  },
-  [BlockChainType.migaloo]: {
-    channel: 'channel-2',
-  },
-}
-
-export const ibcPrefix: Record<IbcNetwork, string> = {
-  [BlockChainType.osmo]: 'osmo1',
-  [BlockChainType.scrt]: 'secret1',
-  [BlockChainType.inj]: 'inj1',
-  [BlockChainType.axelar]: 'axelar1',
-  [BlockChainType.cosmos]: 'cosmos1',
-  [BlockChainType.juno]: 'juno1',
-  [BlockChainType.crescent]: 'cre1',
-  [BlockChainType.kujira]: 'kujira1',
-  [BlockChainType.carbon]: 'swth1',
-  [BlockChainType.stride]: 'stride1',
-  [BlockChainType.migaloo]: 'migaloo1',
-}
-
-export const ibcChainId: Record<IbcNetwork, string> = {
-  [BlockChainType.osmo]: 'osmosis-1',
-  [BlockChainType.scrt]: 'secret-4',
-  [BlockChainType.inj]: 'injective-1',
-  [BlockChainType.axelar]: 'axelar-dojo-1',
-  [BlockChainType.cosmos]: 'cosmoshub-4',
-  [BlockChainType.juno]: 'juno-1',
-  [BlockChainType.crescent]: 'crescent-1',
-  [BlockChainType.kujira]: 'kaiyo-1',
-  [BlockChainType.carbon]: 'carbon-1',
-  [BlockChainType.stride]: 'stride-1',
-  [BlockChainType.migaloo]: 'migaloo-1',
-}
-
-export const ibcRpc: Record<IbcNetwork, string> = {
-  [BlockChainType.osmo]: 'https://rpc-osmosis.tfl.foundation/',
-  [BlockChainType.scrt]: 'https://lcd-secret.scrtlabs.com/rpc/',
-  [BlockChainType.inj]: 'https://rpc-injective.tfl.foundation/',
-  [BlockChainType.axelar]: 'https://rpc-axelar.tfl.foundation/',
-  [BlockChainType.cosmos]: 'https://rpc-cosmoshub.tfl.foundation/',
-  [BlockChainType.juno]: 'https://rpc-juno.tfl.foundation/',
-  [BlockChainType.crescent]: 'https://rpc-crescent.tfl.foundation/',
-  [BlockChainType.kujira]: 'https://rpc-kujira.tfl.foundation/',
-  [BlockChainType.carbon]: 'https://rpc-carbon.tfl.foundation/',
-  [BlockChainType.stride]: 'https://rpc-stride.tfl.foundation/',
-  [BlockChainType.migaloo]: 'https://rpc-migaloo.tfl.foundation/',
-}
-
-export interface LocalTerraNetwork {
-  name: TerraNetworkEnum
-  chainID: string
-  mantle: string
-  lcd: string
-  fcd: string
-  walletconnectID: number
-}
-
-export enum TerraNetworkEnum {
-  mainnet = 'mainnet',
-  testnet = 'testnet',
-}
-
-export enum TerraAssetsPathEnum {
-  station_maintenamce = '/station/maintenance.json',
-  chains = '/chains.json',
-
-  cw20_tokens = '/cw20/tokens.json',
-  ibc_tokens = '/ibc/tokens.json',
+export const EVM_CHAIN_IDS: Record<string, number> = {
+  [BlockChainType.ethereum]: 1,
+  [BlockChainType.base]: 8453,
 }

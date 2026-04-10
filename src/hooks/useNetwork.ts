@@ -1,12 +1,15 @@
 import { useMemo } from 'react'
 import { useRecoilValue } from 'recoil'
-import ContractStore from 'store/ContractStore'
 
 import NetworkStore from 'store/NetworkStore'
 import SendStore from 'store/SendStore'
 
-import { BlockChainType, BridgeType } from 'types/network'
-import useWhiteList from './useWhiteList'
+import {
+  BlockChainType,
+  isCosmosChain,
+  isEvmChain,
+  EVM_CHAIN_IDS,
+} from 'types/network'
 
 const useNetwork = (): {
   getScannerLink: (props: { address: string; type: 'tx' | 'address' }) => string
@@ -16,14 +19,8 @@ const useNetwork = (): {
   const asset = useRecoilValue(SendStore.asset)
   const fromBlockChain = useRecoilValue(SendStore.fromBlockChain)
   const toBlockChain = useRecoilValue(SendStore.toBlockChain)
-  const bridgeUsed = useRecoilValue(SendStore.bridgeUsed)
-  const etherBaseExt = useRecoilValue(NetworkStore.etherBaseExt)
-  const isTestnet = useRecoilValue(NetworkStore.isTestnet)
+  const evmNetwork = useRecoilValue(NetworkStore.evmNetwork)
 
-  const terraWhiteList = useRecoilValue(ContractStore.terraWhiteList)
-  const whiteList = useWhiteList()
-
-  // get the explorer link based on the current chain
   const getScannerLink = ({
     address,
     type,
@@ -31,81 +28,21 @@ const useNetwork = (): {
     address: string
     type: 'tx' | 'address'
   }): string => {
-    if (bridgeUsed === BridgeType.axelar && type === 'tx') {
-      return `https://axelarscan.io/transfer/${address}`
-    } else if (fromBlockChain === BlockChainType.terra) {
-      return `https://terrasco.pe/${
-        isTestnet ? 'testnet' : 'mainnet'
-      }/${type}/${address}`
-    } else if (fromBlockChain === BlockChainType.kujira) {
+    if (isCosmosChain(fromBlockChain)) {
+      // AtomOne explorer
       return type === 'tx'
-        ? `https://finder.kujira.app/kaiyo-1/tx/${address}`
-        : `https://finder.kujira.app/kaiyo-1/address/${address}`
-    } else if (fromBlockChain === BlockChainType.osmo) {
-      return type === 'tx'
-        ? `https://www.mintscan.io/osmosis/txs/${address}`
-        : `https://www.mintscan.io/osmosis/account/${address}`
-    } else if (fromBlockChain === BlockChainType.scrt) {
-      return type === 'tx'
-        ? `https://www.mintscan.io/secret/txs/${address}`
-        : `https://www.mintscan.io/secret/account/${address}`
-    } else if (fromBlockChain === BlockChainType.inj) {
-      return type === 'tx'
-        ? `https://www.mintscan.io/injective/txs/${address}`
-        : `https://www.mintscan.io/injective/account/${address}`
-    } else if (fromBlockChain === BlockChainType.cosmos) {
-      return type === 'tx'
-        ? `https://www.mintscan.io/cosmos/txs/${address}`
-        : `https://www.mintscan.io/cosmos/account/${address}`
-    } else if (fromBlockChain === BlockChainType.carbon) {
-      return type === 'tx'
-        ? `https://scan.carbon.network/transaction/${address}`
-        : `https://scan.carbon.network/account/${address}`
-    } else if (fromBlockChain === BlockChainType.migaloo) {
-      return type === 'tx'
-        ? `https://explorer.silknodes.io/whitewhale/tx/${address}`
-        : `https://explorer.silknodes.io/whitewhale/account/${address}`
-    } else if (etherBaseExt) {
-      let subdomain = ''
-
-      if (fromBlockChain === BlockChainType.bsc) {
-        subdomain = isTestnet ? 'testnet.' : ''
-        return `https://${subdomain}bscscan.com/${type}/${address}`
-      } else if (fromBlockChain === BlockChainType.polygon) {
-        return `https://polygonscan.com/${type}/${address}`
-      } else if (fromBlockChain === BlockChainType.avalanche) {
-        return `https://snowtrace.io/${type}/${address}`
-      } else if (fromBlockChain === BlockChainType.fantom) {
-        return `https://ftmscan.com/${type}/${address}`
-      } else if (fromBlockChain === BlockChainType.moonbeam) {
-        return `https://moonscan.io/${type}/${address}`
-      }
-      subdomain = isTestnet ? `${etherBaseExt.name}.` : ''
-      return `https://${subdomain}etherscan.io/${type}/${address}`
+        ? `https://explorer.atomone.com/atomone-1/tx/${address}`
+        : `https://explorer.atomone.com/atomone-1/account/${address}`
+    } else if (fromBlockChain === BlockChainType.ethereum) {
+      return `https://etherscan.io/${type}/${address}`
+    } else if (fromBlockChain === BlockChainType.base) {
+      return `https://basescan.org/${type}/${address}`
     }
     return ''
   }
 
-  const getTokenAddress = (
-    blockChain: BlockChainType,
-    tokenAddress: string
-  ): string => {
-    switch (blockChain) {
-      case BlockChainType.terra:
-        return terraWhiteList[tokenAddress]
-      default:
-        return whiteList[tokenAddress]
-    }
-  }
-
-  const fromTokenAddress = useMemo(
-    () => asset && getTokenAddress(fromBlockChain, asset.terraToken),
-    [asset]
-  )
-  const toTokenAddress = useMemo(
-    () => asset && getTokenAddress(toBlockChain, asset.terraToken),
-    [asset]
-  )
+  const fromTokenAddress = useMemo(() => asset?.denom, [asset])
+  const toTokenAddress = useMemo(() => asset?.denom, [asset])
 
   return {
     getScannerLink,
