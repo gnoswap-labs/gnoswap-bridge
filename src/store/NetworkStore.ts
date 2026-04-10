@@ -1,63 +1,17 @@
-import { atom, selector } from 'recoil'
-import { Network as EtherNetwork } from '@ethersproject/networks'
+import { atom } from 'recoil'
 
-import { NETWORK } from 'consts'
-import { BlockChainType, LocalTerraNetwork, isIbcNetwork } from 'types/network'
-import AuthStore from './AuthStore'
-import SendStore from './SendStore'
-import { defaultTerraNetworks } from 'hooks/useTerraNetwork'
+import { BlockChainType } from 'types/network'
 
-const terraExt = atom<LocalTerraNetwork | undefined>({
-  key: 'terraExt',
-  default: undefined,
-})
+type EvmNetwork = { chainId: number; name: string }
 
-const terraLocal = atom<LocalTerraNetwork>({
-  key: 'terraLocal',
-  default: defaultTerraNetworks.mainnet,
-})
-
-const etherBaseExt = atom<EtherNetwork | undefined>({
-  key: 'etherBaseExt',
+const evmNetwork = atom<EvmNetwork | undefined>({
+  key: 'evmNetwork',
   default: undefined,
 })
 
 const keplrExt = atom<{ chainID: string; name: string } | undefined>({
   key: 'keplrExt',
   default: undefined,
-})
-
-const isTestnet = selector<boolean>({
-  key: 'isTestnet',
-  get: ({ get }) => {
-    const isLoggedIn = get(AuthStore.isLoggedIn)
-    const fromBlockChain = get(SendStore.fromBlockChain)
-    if (isLoggedIn) {
-      if (fromBlockChain === BlockChainType.terra) {
-        const _terraExt = get(terraExt)
-
-        return _terraExt?.name !== 'mainnet'
-      }
-
-      if (isIbcNetwork(fromBlockChain)) {
-        // testnet not supported
-        return false
-      }
-
-      if (NETWORK.isEtherBaseBlockChain(fromBlockChain)) {
-        const _etherBaseExt = get(etherBaseExt)
-
-        return (
-          !!_etherBaseExt?.chainId &&
-          [
-            NETWORK.ETH_CHAINID.BSC_TEST,
-            NETWORK.ETH_CHAINID.ETH_ROPSTEN,
-          ].includes(_etherBaseExt.chainId)
-        )
-      }
-    }
-    return false
-  },
 })
 
 const isVisibleNotSupportNetworkModal = atom<boolean>({
@@ -78,11 +32,8 @@ const triedNotSupportNetwork = atom<
 })
 
 export default {
-  terraExt,
-  terraLocal,
-  etherBaseExt,
+  evmNetwork,
   keplrExt,
-  isTestnet,
   isVisibleNotSupportNetworkModal,
   triedNotSupportNetwork,
 }

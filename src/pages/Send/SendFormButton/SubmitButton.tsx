@@ -1,10 +1,31 @@
 import { ReactElement, useState } from 'react'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import _ from 'lodash'
-import { CircularProgress } from '@material-ui/core'
 
-import { COLOR } from 'consts'
-import { BlockChainType, isIbcNetwork } from 'types/network'
+const CircularProgress = ({ size = 20 }: { size?: number }): ReactElement => (
+  <svg
+    className="animate-spin"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    />
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+    />
+  </svg>
+)
+
+import { BlockChainType, isCosmosChain, isEvmChain } from 'types/network'
 import { RequestTxResultType } from 'types/send'
 
 import { Button } from 'components'
@@ -12,7 +33,6 @@ import SendStore from 'store/SendStore'
 import SendProcessStore, { ProcessStatus } from 'store/SendProcessStore'
 import FormErrorMessage from 'components/FormErrorMessage'
 import useSend from 'hooks/useSend'
-import useTerraTxInfo from 'hooks/useTerraTxInfo'
 
 const SubmitButton = (): ReactElement => {
   const [status, setStatus] = useRecoilState(SendProcessStore.sendProcessStatus)
@@ -25,76 +45,38 @@ const SubmitButton = (): ReactElement => {
 
   const [errorMessage, setErrorMessage] = useState('')
 
-  const { submitRequestTx, waitForEtherBaseTransaction } = useSend()
-  const { getTxInfos } = useTerraTxInfo()
+  const { submitRequestTx } = useSend()
 
   const loading = [ProcessStatus.Pending, ProcessStatus.Submit].includes(status)
 
-  const waitForReceipt = async ({
-    submitResult,
-  }: {
-    submitResult: RequestTxResultType
-  }): Promise<void> => {
-    if (submitResult.success) {
-      setStatus(ProcessStatus.Pending)
-      if (fromBlockChain === BlockChainType.terra) {
-        const waitReceipt = setInterval(async () => {
-          try {
-            const txInfos = await getTxInfos({
-              hash: submitResult.hash,
-            })
-            if (_.some(txInfos)) {
-              setStatus(ProcessStatus.Done)
-              clearInterval(waitReceipt)
-            }
-          } catch (error) {
-            setWaitForReceiptError(_.toString(error))
-            setStatus(ProcessStatus.Failed)
-          }
-        }, 500)
-      } else if (isIbcNetwork(fromBlockChain)) {
-        // TODO: implement broadcast sync
-        setStatus(ProcessStatus.Done)
-      } else {
-        try {
-          await waitForEtherBaseTransaction({
-            hash: submitResult.hash,
-          })
-          setStatus(ProcessStatus.Done)
-        } catch (error) {
-          setWaitForReceiptError(_.toString(error))
-          setStatus(ProcessStatus.Failed)
-        }
-      }
-    } else {
-      setErrorMessage(submitResult.errorMessage || '')
-    }
-  }
-
   const onClickSubmitButton = async (): Promise<void> => {
     setErrorMessage('')
-    setStatus(ProcessStatus.Pending)
+    setWaitForReceiptError('')
 
-    const submitResult = await submitRequestTx()
+    try {
+      const submitResult = await submitRequestTx()
 
-    setRequestTxResult(submitResult)
+      setRequestTxResult(submitResult)
 
-    setStatus(ProcessStatus.Confirm)
-    return waitForReceipt({ submitResult })
-  }
-
-  const IfLoadingText = (): ReactElement => {
-    return loading ? (
-      <CircularProgress size={20} style={{ color: COLOR.darkGray2 }} />
-    ) : (
-      <>Confirm</>
-    )
+      if (submitResult.success) {
+        setStatus(ProcessStatus.Done)
+      } else {
+        setErrorMessage(submitResult.errorMessage || 'Transaction failed')
+        setWaitForReceiptError(
+          submitResult.errorMessage || 'Transaction failed'
+        )
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      setErrorMessage(message)
+      setWaitForReceiptError(message)
+    }
   }
 
   return (
     <>
       <Button onClick={onClickSubmitButton} disabled={loading}>
-        <IfLoadingText />
+        {loading ? <CircularProgress size={20} /> : <>Confirm</>}
       </Button>
       <FormErrorMessage
         errorMessage={errorMessage}

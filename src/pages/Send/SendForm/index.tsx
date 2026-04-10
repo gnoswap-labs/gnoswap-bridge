@@ -1,21 +1,18 @@
 import { ReactElement, useEffect, useState } from 'react'
-import styled from 'styled-components'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import _ from 'lodash'
+import { useRecoilState, useRecoilValue } from 'recoil'
+
 import { useDebouncedCallback } from 'use-debounce'
 import BigNumber from 'bignumber.js'
-import { ArrowClockwise } from 'react-bootstrap-icons'
+import { ArrowClockwise } from 'components/icons'
 
 import { COLOR } from 'consts'
 
-import { BlockChainType, BridgeType } from 'types/network'
 import { ValidateItemResultType } from 'types/send'
 import { Text, Row } from 'components'
 import FormLabel from 'components/FormLabel'
 import FormErrorMessage from 'components/FormErrorMessage'
 import FormLabelInput from 'components/FormLabelInput'
 
-import useSend from 'hooks/useSend'
 import useSendValidate from 'hooks/useSendValidate'
 import useAsset from 'hooks/useAsset'
 
@@ -23,49 +20,7 @@ import AuthStore from 'store/AuthStore'
 import SendStore from 'store/SendStore'
 
 import AssetList from './AssetList'
-import CopyTokenAddress from './CopyTokenAddress'
-import FormFeeInfo from './FormFeeInfo'
-import NetworkStore from 'store/NetworkStore'
-import getWormholeFees from 'packages/wormhole/fees'
-import { getAxelarFee } from 'packages/axelar'
 import AutoFillButton from './AutoFillButton'
-
-const StyledContainer = styled.div``
-
-const StyledFormSection = styled.div`
-  margin-bottom: 40px;
-`
-
-const StyledMaxButton = styled.div`
-  position: absolute;
-  top: 50%;
-  margin-top: -13px;
-  right: 0;
-  background-color: ${COLOR.darkGray2};
-  font-size: 12px;
-  border-radius: 5px;
-  padding: 0 10px;
-  line-height: 24px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-
-  cursor: pointer;
-  :hover {
-    background-color: #323842;
-  }
-`
-
-const StyledRefreshButton = styled.div<{ refreshing: boolean }>`
-  display: flex;
-  align-items: center;
-  color: ${COLOR.primary};
-  font-size: 12px;
-  font-weight: bold;
-  opacity: ${({ refreshing }): number => (refreshing ? 0.5 : 1)};
-  cursor: ${({ refreshing }): string => (refreshing ? 'default' : 'pointer')};
-  user-select: none;
-`
 
 const RefreshButton = (): ReactElement => {
   const isLoggedIn = useRecoilValue(AuthStore.isLoggedIn)
@@ -83,11 +38,15 @@ const RefreshButton = (): ReactElement => {
   return (
     <>
       {isLoggedIn && (
-        <StyledRefreshButton
-          onClick={(): void => {
-            dbcRefresh.callback()
+        <div
+          className="flex items-center text-bridge-sky text-xs font-bold select-none"
+          style={{
+            opacity: refreshing ? 0.5 : 1,
+            cursor: refreshing ? 'default' : 'pointer',
           }}
-          refreshing={refreshing}
+          onClick={(): void => {
+            dbcRefresh()
+          }}
         >
           <ArrowClockwise style={{ marginRight: 5 }} size={14} />
           <Text
@@ -99,7 +58,7 @@ const RefreshButton = (): ReactElement => {
           >
             {refreshing ? 'REFRESHING...' : 'REFRESH'}
           </Text>
-        </StyledRefreshButton>
+        </div>
       )}
     </>
   )
@@ -110,36 +69,24 @@ const SendForm = ({
 }: {
   feeValidationResult: ValidateItemResultType
 }): ReactElement => {
-  const loginUser = useRecoilValue(AuthStore.loginUser)
+  const cosmosWallet = useRecoilValue(AuthStore.cosmosWallet)
+  const evmWallet = useRecoilValue(AuthStore.evmWallet)
   const isLoggedIn = useRecoilValue(AuthStore.isLoggedIn)
 
   // Send Data
   const asset = useRecoilValue(SendStore.asset)
   const [toAddress, setToAddress] = useRecoilState(SendStore.toAddress)
   const [amount, setAmount] = useRecoilState(SendStore.amount)
-  const [memo, setMemo] = useRecoilState(SendStore.memo)
   const toBlockChain = useRecoilValue(SendStore.toBlockChain)
   const fromBlockChain = useRecoilValue(SendStore.fromBlockChain)
-
-  // Computed data from Send data
-  const setGasFeeList = useSetRecoilState(SendStore.gasFeeList)
-  const setBridgeFeeAmount = useSetRecoilState(SendStore.bridgeFee)
-  const setAmountAfterBridgeFee = useSetRecoilState(
-    SendStore.amountAfterBridgeFee
-  )
-
-  const bridgeUsed = useRecoilValue(SendStore.bridgeUsed)
 
   const [validationResult, setValidationResult] = useRecoilState(
     SendStore.validationResult
   )
 
-  const isTestnet = useRecoilValue(NetworkStore.isTestnet)
-
   const [inputAmount, setInputAmount] = useState('')
 
   const { formatBalance, getAssetList, getDecimals } = useAsset()
-  const { getTerraFeeList } = useSend()
   const { validateSendData } = useSendValidate()
 
   const onChangeToAddress = ({ value }: { value: string }): void => {
@@ -147,21 +94,17 @@ const SendForm = ({
   }
 
   const onChangeAmount = ({ value }: { value: string }): void => {
-    if (_.isEmpty(value)) {
+    if (!value || value.length === 0) {
       setInputAmount('')
       setAmount('')
       return
     }
 
-    if (false === _.isNaN(_.toNumber(value))) {
+    if (false === isNaN(Number(value))) {
       setInputAmount(value)
       const decimalSize = new BigNumber(getDecimals())
       setAmount(new BigNumber(value).times(decimalSize).toString(10))
     }
-  }
-
-  const onChangeMemo = ({ value }: { value: string }): void => {
-    setMemo(value)
   }
 
   const onClickMaxButton = async (): Promise<void> => {
@@ -169,80 +112,29 @@ const SendForm = ({
     onChangeAmount({ value: formatBalance(assetAmount) })
   }
 
-  const setBridgeFee = async (): Promise<void> => {
-    if (bridgeUsed === BridgeType.axelar) {
-      const fee = await getAxelarFee(
-        fromBlockChain,
-        toBlockChain,
-        asset?.terraToken || '',
-        new BigNumber(amount).toNumber()
-      )
-      setBridgeFeeAmount(new BigNumber(fee))
-      const computedAmount = new BigNumber(amount).minus(fee)
-      setAmountAfterBridgeFee(
-        computedAmount.isGreaterThan(0) ? computedAmount : new BigNumber(0)
-      )
-    } else if (bridgeUsed === BridgeType.wormhole) {
-      const wormholeFee = new BigNumber(
-        await getWormholeFees(toBlockChain, asset?.terraToken || '')
-      )
-      setBridgeFeeAmount(wormholeFee)
-      const computedAmount = new BigNumber(amount).minus(wormholeFee)
-      setAmountAfterBridgeFee(
-        computedAmount.isGreaterThan(0) ? computedAmount : new BigNumber(0)
-      )
-    } else {
-      setBridgeFeeAmount(new BigNumber(0))
-      setAmountAfterBridgeFee(new BigNumber(amount))
-    }
-  }
-
-  // It's for Fee(gas) and ShuttleFee
-  const dbcGetFeeInfoWithValidation = useDebouncedCallback(async () => {
-    // set false while waiting for verification
+  const dbcGetValidation = useDebouncedCallback(async () => {
     setValidationResult({ isValid: false })
     const sendDataResult = await validateSendData()
     setValidationResult(sendDataResult)
-
-    const ableToGetFeeInfo = isLoggedIn && amount && toAddress
-
-    if (asset?.terraToken && ableToGetFeeInfo) {
-      if (sendDataResult.isValid) {
-        // get terra Send Fee Info
-        const terraFeeList = await getTerraFeeList()
-        setGasFeeList(terraFeeList)
-      }
-
-      setBridgeFee()
-    }
   }, 300)
 
-  //get terra send fee info
   useEffect(() => {
-    dbcGetFeeInfoWithValidation.callback()
+    dbcGetValidation()
     return (): void => {
-      dbcGetFeeInfoWithValidation.cancel()
+      dbcGetValidation.cancel()
     }
-  }, [amount, toAddress, toBlockChain, fromBlockChain, memo, asset, bridgeUsed])
+  }, [amount, toAddress, toBlockChain, fromBlockChain, asset])
 
   useEffect(() => {
     onChangeAmount({ value: inputAmount })
     getAssetList().then((): void => {
-      dbcGetFeeInfoWithValidation.callback()
+      dbcGetValidation()
     })
-  }, [
-    // to check decimal length by network
-    loginUser,
-    // to check if asset valid by network
-    toBlockChain,
-    fromBlockChain,
-    bridgeUsed,
-    isTestnet,
-  ])
+  }, [cosmosWallet, evmWallet, toBlockChain, fromBlockChain])
 
   return (
-    <StyledContainer>
-      <StyledFormSection>
+    <div>
+      <div className="mb-10">
         <Row style={{ justifyContent: 'space-between' }}>
           <FormLabel title={'Asset'} />
           <RefreshButton />
@@ -253,10 +145,9 @@ const SendForm = ({
           errorMessage={validationResult.errorMessage?.asset}
           style={{ marginBottom: 0 }}
         />
-        <CopyTokenAddress />
-      </StyledFormSection>
+      </div>
 
-      <StyledFormSection>
+      <div className="mb-10">
         <div style={{ position: 'relative' }}>
           <FormLabelInput
             inputProps={{
@@ -268,7 +159,12 @@ const SendForm = ({
             }}
             labelProps={{ children: 'Amount' }}
           />
-          <StyledMaxButton onClick={onClickMaxButton}>Max</StyledMaxButton>
+          <div
+            className="absolute top-1/2 -mt-[13px] right-0 bg-bridge-gray text-xs rounded-[5px] px-2.5 leading-6 h-[26px] flex items-center cursor-pointer hover:bg-[#323842]"
+            onClick={onClickMaxButton}
+          >
+            Max
+          </div>
         </div>
 
         {isLoggedIn && (
@@ -276,9 +172,9 @@ const SendForm = ({
             errorMessage={validationResult.errorMessage?.amount}
           />
         )}
-      </StyledFormSection>
+      </div>
 
-      <StyledFormSection>
+      <div className="mb-10">
         <div style={{ position: 'relative' }}>
           <FormLabelInput
             inputProps={{
@@ -294,28 +190,8 @@ const SendForm = ({
         <FormErrorMessage
           errorMessage={validationResult.errorMessage?.toAddress}
         />
-      </StyledFormSection>
-
-      {fromBlockChain === BlockChainType.terra &&
-        toBlockChain === BlockChainType.terra && (
-          <StyledFormSection>
-            <FormLabelInput
-              inputProps={{
-                value: memo,
-                onChange: ({ target: { value } }): void => {
-                  onChangeMemo({ value })
-                },
-              }}
-              labelProps={{ children: 'Memo (optional)' }}
-            />
-            <FormErrorMessage
-              errorMessage={validationResult.errorMessage?.memo}
-            />
-          </StyledFormSection>
-        )}
-
-      <FormFeeInfo feeValidationResult={feeValidationResult} />
-    </StyledContainer>
+      </div>
+    </div>
   )
 }
 

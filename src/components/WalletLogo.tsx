@@ -2,11 +2,7 @@ import { ComponentType, ReactElement, SVGAttributes } from 'react'
 
 import { COLOR } from 'consts'
 
-import StationPng from 'images/station.png'
-import BinanceSvg from 'images/bsc.svg'
 import MetamaskSvg from 'images/metamask.svg'
-import WalletConnectSvg from 'images/walletconnect.svg'
-import CoinbaseWalletPng from 'images/CoinbaseWallet.png'
 import KeplrPng from 'images/Keplr.png'
 import { WalletEnum } from 'types/wallet'
 import FormImage from './FormImage'
@@ -17,12 +13,7 @@ interface IconProps extends SVGAttributes<SVGElement> {
 }
 
 const walletLogo: Record<WalletEnum, string | ComponentType<IconProps>> = {
-  [WalletEnum.TerraExtension]: StationPng,
-  [WalletEnum.Binance]: BinanceSvg,
   [WalletEnum.MetaMask]: MetamaskSvg,
-  [WalletEnum.WalletConnect]: WalletConnectSvg,
-  [WalletEnum.TerraWalletConnect]: WalletConnectSvg,
-  [WalletEnum.CoinbaseWallet]: CoinbaseWalletPng,
   [WalletEnum.Keplr]: KeplrPng,
 }
 

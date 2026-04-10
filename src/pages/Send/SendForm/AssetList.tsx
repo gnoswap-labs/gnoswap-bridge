@@ -1,10 +1,9 @@
 import { ReactElement, useEffect, useRef, useState } from 'react'
-import _ from 'lodash'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import styled from 'styled-components'
-import { CaretDownFill } from 'react-bootstrap-icons'
 
-import { COLOR, STYLE } from 'consts'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { CaretDownFill } from 'components/icons'
+
+import { COLOR } from 'consts'
 
 import { AssetType } from 'types/asset'
 
@@ -16,73 +15,9 @@ import FormImage from 'components/FormImage'
 import useAsset from 'hooks/useAsset'
 import AuthStore from 'store/AuthStore'
 import SendStore from 'store/SendStore'
+import ContractStore from 'store/ContractStore'
 
 import { InfoElement } from './WarningInfo'
-import { BlockChainType } from 'types'
-
-const StyledContainer = styled.div`
-  padding: 0 25px 40px;
-  background-color: ${COLOR.darkGray2};
-  @media ${STYLE.media.mobile} {
-    padding: 0 24px 20px;
-  }
-`
-const StyledAssetItemBox = styled.div`
-  padding: 0;
-  height: 500px;
-  max-height: 60vh;
-  overflow-y: scroll;
-  background-color: ${COLOR.darkGray};
-  border-radius: ${STYLE.css.borderRadius};
-  ::-webkit-scrollbar {
-    background-color: #202020;
-    width: 16px;
-  }
-  ::-webkit-scrollbar-track {
-    background-color: #202020;
-  }
-  ::-webkit-scrollbar-thumb {
-    background-color: #171717;
-    border-radius: 16px;
-    border: 4px solid #202020;
-  }
-  ::-webkit-scrollbar-button {
-    display: none;
-  }
-`
-
-const StyledAssetItem = styled.div`
-  position: relative;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 10px 20px;
-  line-height: 16px;
-  cursor: pointer;
-  :hover {
-    background-color: #171717;
-  }
-  :last-child {
-    border-bottom: 0;
-  }
-`
-
-const StyledSelectAssetButton = styled.div`
-  cursor: pointer;
-  border-bottom: 2px solid ${COLOR.darkGray2};
-  padding: 12px 0 6px;
-  font-size: 14px;
-  font-weight: 500;
-  :hover {
-    opacity: 0.8;
-  }
-`
-
-const StyledIconBox = styled(View)`
-  flex: 0 0 8%;
-  align-self: center;
-  margin-top: 3px;
-  margin-bottom: 3px;
-  padding-right: 10px;
-`
 
 const AssetItem = ({
   asset,
@@ -95,12 +30,12 @@ const AssetItem = ({
 }): ReactElement => {
   const [oriAsset, setAsset] = useRecoilState(SendStore.asset)
   const isLoggedIn = useRecoilValue(AuthStore.isLoggedIn)
-  const fromBlockChain = useRecoilValue(SendStore.fromBlockChain)
 
   const { formatBalance } = useAsset()
 
   return (
-    <StyledAssetItem
+    <div
+      className="relative border-b border-white/5 py-2.5 px-5 leading-4 cursor-pointer hover:bg-[#171717] last:border-b-0"
       onClick={(): void => {
         if (oriAsset !== asset) {
           onChangeAmount({ value: '' })
@@ -111,33 +46,27 @@ const AssetItem = ({
     >
       <Row style={{ justifyContent: 'space-between' }}>
         <Row>
-          <StyledIconBox>
+          <View className="flex-[0_0_8%] self-center mt-[3px] mb-[3px] pr-2.5">
             <FormImage src={asset.logoURI} size={20} />
-          </StyledIconBox>
+          </View>
           <View>
             <Text style={{ fontSize: 14, fontWeight: 500 }}>
-              {fromBlockChain === BlockChainType.ethereum
-                ? asset.symbol.replace('axl', '')
-                : asset.symbol}
+              {asset.symbol}
             </Text>
             <Text style={{ color: COLOR.blueGray, fontSize: 12 }}>
-              {fromBlockChain === BlockChainType.ethereum
-                ? asset.name.replace('Axelar ', '')
-                : asset.name}
+              {asset.name}
             </Text>
           </View>
         </Row>
         {isLoggedIn && (
           <View style={{ justifyContent: 'center' }}>
             <Text style={{ fontSize: 14 }}>
-              {asset.balance
-                ? formatBalance(asset.balance, asset.terraToken)
-                : '0'}{' '}
+              {asset.balance ? formatBalance(asset.balance, asset.denom) : '0'}{' '}
             </Text>
           </View>
         )}
       </Row>
-    </StyledAssetItem>
+    </div>
   )
 }
 
@@ -150,10 +79,10 @@ const SelectAssetButton = ({
 }): ReactElement => {
   const { formatBalance } = useAsset()
   const isLoggedIn = useRecoilValue(AuthStore.isLoggedIn)
-  const fromBlockChain = useRecoilValue(SendStore.fromBlockChain)
 
   return (
-    <StyledSelectAssetButton
+    <div
+      className="cursor-pointer border-b-2 border-bridge-gray pt-3 pb-1.5 text-sm font-medium hover:opacity-80"
       onClick={(): void => {
         setShowModal(true)
       }}
@@ -166,11 +95,7 @@ const SelectAssetButton = ({
               size={18}
               style={{ marginTop: -2 }}
             />
-            <Text style={{ marginLeft: 10, fontSize: 16 }}>
-              {fromBlockChain === BlockChainType.ethereum
-                ? asset.symbol.replace('axl', '')
-                : asset.symbol}
-            </Text>
+            <Text style={{ marginLeft: 10, fontSize: 16 }}>{asset.symbol}</Text>
           </Row>
           <Row style={{ alignItems: 'center' }}>
             {isLoggedIn && (
@@ -184,7 +109,7 @@ const SelectAssetButton = ({
               >
                 Available{' '}
                 {asset.balance
-                  ? formatBalance(asset.balance, asset.terraToken)
+                  ? formatBalance(asset.balance, asset.denom)
                   : '0'}
               </Text>
             )}
@@ -192,7 +117,7 @@ const SelectAssetButton = ({
           </Row>
         </Row>
       )}
-    </StyledSelectAssetButton>
+    </div>
   )
 }
 
@@ -205,7 +130,7 @@ const AssetList = ({
 }): ReactElement => {
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const assetList = useRecoilValue(SendStore.loginUserAssetList)
+  const assetList = useRecoilValue(ContractStore.assetList)
   const setAsset = useSetRecoilState(SendStore.asset)
   const [showModal, setShowModal] = useState(false)
   const [inputFilter, setInputFilter] = useState('')
@@ -226,11 +151,10 @@ const AssetList = ({
   }, [showModal])
 
   useEffect(() => {
-    if (_.some(assetList)) {
+    if (Array.isArray(assetList) && assetList.length > 0) {
       if (selectedAsset) {
         setAsset(
-          assetList.find((x) => x.terraToken === selectedAsset.terraToken) ||
-            assetList[0]
+          assetList.find((x) => x.denom === selectedAsset.denom) || assetList[0]
         )
       } else {
         setAsset(assetList[0])
@@ -250,7 +174,7 @@ const AssetList = ({
         }}
         header={<Text style={{ justifyContent: 'center' }}>Select Asset</Text>}
       >
-        <StyledContainer>
+        <div className="px-[25px] pb-10 bg-bridge-gray max-[575px]:px-6 max-[575px]:pb-5">
           <div
             style={{
               marginBottom: 25,
@@ -269,8 +193,9 @@ const AssetList = ({
             />
           </div>
 
-          <StyledAssetItemBox
+          <div
             ref={scrollRef}
+            className="p-0 h-[500px] max-h-[60vh] overflow-y-scroll bg-[#202020] rounded-[10px] [&::-webkit-scrollbar]:bg-[#202020] [&::-webkit-scrollbar]:w-4 [&::-webkit-scrollbar-track]:bg-[#202020] [&::-webkit-scrollbar-thumb]:bg-[#171717] [&::-webkit-scrollbar-thumb]:rounded-2xl [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-[#202020] [&::-webkit-scrollbar-button]:hidden"
             onLoad={(): void => {
               const index = selectedAsset
                 ? filteredAssetList.indexOf(selectedAsset)
@@ -281,8 +206,9 @@ const AssetList = ({
               })
             }}
           >
-            {_.some(filteredAssetList) ? (
-              _.map(filteredAssetList, (asset, index) => (
+            {Array.isArray(filteredAssetList) &&
+            filteredAssetList.length > 0 ? (
+              filteredAssetList.map((asset, index) => (
                 <AssetItem
                   key={`asset-${index}`}
                   asset={asset}
@@ -302,8 +228,8 @@ const AssetList = ({
             >
               If you can't find your asset try to switch chain or bridge used
             </InfoElement>
-          </StyledAssetItemBox>
-        </StyledContainer>
+          </div>
+        </div>
       </DefaultModal>
     </>
   )

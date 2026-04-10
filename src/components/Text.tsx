@@ -1,15 +1,17 @@
-import { HTMLAttributes, ReactElement } from 'react'
-import styled from 'styled-components'
+import { HTMLAttributes, forwardRef } from 'react'
 
-import { COLOR } from 'consts'
-import View from './View'
+const Text = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className = '', ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={`flex flex-col text-bridge-white ${className}`}
+        {...props}
+      />
+    )
+  }
+)
 
-const StyledText = styled(View)`
-  color: ${COLOR.text};
-`
-
-const Text = (props: HTMLAttributes<HTMLDivElement>): ReactElement => {
-  return <StyledText {...props} />
-}
+Text.displayName = 'Text'
 
 export default Text

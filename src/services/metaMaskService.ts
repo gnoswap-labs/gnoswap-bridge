@@ -1,47 +1,40 @@
-import MetaMaskOnboarding from '@metamask/onboarding'
 import { NETWORK } from 'consts'
-import { BlockChainType } from 'types'
+import { BlockChainType, EVM_CHAIN_IDS } from 'types/network'
 
-const { ETH_CHAINID } = NETWORK
-
-if (window.ethereum) {
-  window.ethereum.autoRefreshOnNetworkChange = false
+declare global {
+  interface Window {
+    ethereum?: any
+  }
 }
 
 const checkInstalled = (): boolean => {
-  return MetaMaskOnboarding.isMetaMaskInstalled()
+  return typeof window !== 'undefined' && !!window.ethereum?.isMetaMask
 }
 
 const connect = async (): Promise<{
   address: string
   provider: any
 }> => {
-  const method = 'eth_requestAccounts'
-  const accounts = await window.ethereum?.request({ method })
+  const accounts = await window.ethereum?.request({
+    method: 'eth_requestAccounts',
+  })
   const address = (accounts && accounts[0]) || ''
-
-  const provider = window.ethereum
-  return { address, provider }
+  return { address, provider: window.ethereum }
 }
 
 const install = (): void => {
-  const metamask = new MetaMaskOnboarding()
-  metamask.startOnboarding()
+  window.open('https://metamask.io/download/', '_blank')
 }
 
-// functions to suggest networks
 async function addNetworkAndSwitch(
   network: BlockChainType,
-  target: number,
-  testnet?: number
+  target: number
 ): Promise<void> {
   const formatChainId = (n: number): string => '0x' + n.toString(16)
   const currentChain = window.ethereum?.networkVersion
-  // if network is allowed return
   /* eslint eqeqeq: "off" */
-  if (currentChain == target || currentChain == testnet) return
+  if (currentChain == target) return
 
-  // else try to suggest chain
   try {
     await window.ethereum?.request({
       method: 'wallet_switchEthereumChain',
@@ -51,17 +44,15 @@ async function addNetworkAndSwitch(
         },
       ],
     })
-  } catch (e) {
-    // if metamask doesn't have the network
+  } catch (e: any) {
     if (e.code === 4902) {
-      // suggest network
       await window.ethereum?.request({
         method: 'wallet_addEthereumChain',
         params: [
           {
             chainId: formatChainId(target),
             chainName: NETWORK.blockChainName[network],
-            rpcUrls: NETWORK.metamaskRpc[network],
+            rpcUrls: NETWORK.evmRpc[network],
           },
         ],
       })
@@ -72,33 +63,9 @@ async function addNetworkAndSwitch(
 }
 
 const switchNetwork = async (network: BlockChainType): Promise<void> => {
-  switch (network) {
-    case BlockChainType.ethereum:
-      await addNetworkAndSwitch(
-        network,
-        ETH_CHAINID.ETH_MAIN,
-        ETH_CHAINID.ETH_ROPSTEN
-      )
-      return
-    case BlockChainType.bsc:
-      await addNetworkAndSwitch(
-        network,
-        ETH_CHAINID.BSC_MAIN,
-        ETH_CHAINID.BSC_TEST
-      )
-      return
-    case BlockChainType.avalanche:
-      await addNetworkAndSwitch(network, ETH_CHAINID.AVAX_MAIN)
-      return
-    case BlockChainType.fantom:
-      await addNetworkAndSwitch(network, ETH_CHAINID.FTM_MAIN)
-      return
-    case BlockChainType.polygon:
-      await addNetworkAndSwitch(network, ETH_CHAINID.POLY_MAIN)
-      return
-    case BlockChainType.moonbeam:
-      await addNetworkAndSwitch(network, ETH_CHAINID.MOON_MAIN)
-      return
+  const chainId = EVM_CHAIN_IDS[network]
+  if (chainId) {
+    await addNetworkAndSwitch(network, chainId)
   }
 }
 

@@ -1,52 +1,4 @@
 import { InputHTMLAttributes, LabelHTMLAttributes, ReactElement } from 'react'
-import styled from 'styled-components'
-
-import { COLOR } from 'consts'
-
-const StyledContainer = styled.div`
-  position: relative;
-  display: flex;
-  flex: 1;
-`
-
-const StyledInput = styled.input`
-  flex: 1;
-  padding-top: 12px;
-  padding-bottom: 6px;
-  border: none;
-  border-radius: 0;
-  padding-left: 0;
-  font-size: 16px;
-  color: ${COLOR.text};
-  border-bottom: 1px solid ${COLOR.darkGray2};
-  background-color: transparent;
-  :focus {
-    outline: none;
-  }
-
-  :focus ~ label,
-  :not(:placeholder-shown) ~ label {
-    top: -15px;
-    font-size: 12px;
-    letter-spacing: -0.28px;
-  }
-`
-
-const StyledLable = styled.label`
-  font-weight: normal;
-  font-stretch: normal;
-  font-style: normal;
-  line-height: normal;
-  letter-spacing: -0.37px;
-  color: #737373;
-  font-size: 16px;
-  position: absolute;
-  pointer-events: none;
-  top: 10px;
-  transition: 0.2s ease all;
-  -moz-transition: 0.2s ease all;
-  -webkit-transition: 0.2s ease all;
-`
 
 const FormLabelInput = ({
   inputProps,
@@ -56,17 +8,21 @@ const FormLabelInput = ({
   labelProps: LabelHTMLAttributes<HTMLLabelElement>
 }): ReactElement => {
   return (
-    <StyledContainer>
-      <StyledInput
+    <div className="relative flex flex-1">
+      <input
         {...inputProps}
         // Placeholder ' ' used to distinguish of label position
         placeholder=" "
-        onWheel={({ currentTarget }): void => {
-          currentTarget.blur()
+        onWheel={(e: React.WheelEvent<HTMLInputElement>): void => {
+          e.currentTarget.blur()
         }}
+        className="peer flex-1 pt-3 pb-1.5 border-none rounded-none pl-0 text-base text-bridge-white border-b border-bridge-gray bg-transparent focus:outline-none"
       />
-      <StyledLable {...labelProps} />
-    </StyledContainer>
+      <label
+        {...labelProps}
+        className="absolute top-2.5 text-base font-normal tracking-tight text-[#737373] pointer-events-none transition-all duration-200 ease-in-out peer-focus:top-[-15px] peer-focus:text-xs peer-focus:tracking-tight peer-[:not(:placeholder-shown)]:top-[-15px] peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:tracking-tight"
+      />
+    </div>
   )
 }
 

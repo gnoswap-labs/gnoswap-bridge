@@ -1,20 +1,15 @@
 import { ReactElement } from 'react'
-import { Switch, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 
 import SendPage from 'pages/Send'
+import DashboardPage from 'pages/Dashboard'
 
-export enum PathEnum {
-  default = '',
-  sendComplete = 'sendComplete',
-}
-
-const SwitchPages = (): ReactElement => {
+const AppRoutes = (): ReactElement => {
   return (
-    <Switch>
-      <Route exact path={`/${PathEnum.default}`}>
-        <SendPage />
-      </Route>
-    </Switch>
+    <Routes>
+      <Route path="/" element={<SendPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+    </Routes>
   )
 }
-export default SwitchPages
+export default AppRoutes

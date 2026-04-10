@@ -1,21 +1,15 @@
-import { AssetSymbolEnum, AssetNativeDenomEnum } from 'types/asset'
+import { AssetSymbolEnum, AssetDenomEnum } from 'types/asset'
 
-const TERRA_DECIMAL = 1e6
-const BTC_DECIMAL = 1e8
+const ATOMONE_DECIMAL = 1e6
 const ETHER_BASE_DECIMAL = 1e18
 
-const symbolOfDenom: Record<AssetNativeDenomEnum, AssetSymbolEnum> = {
-  [AssetNativeDenomEnum.uluna]: AssetSymbolEnum.Luna,
-}
-
-const nativeDenoms = {
-  [symbolOfDenom[AssetNativeDenomEnum.uluna]]: AssetNativeDenomEnum.uluna,
+const symbolOfDenom: Record<AssetDenomEnum, AssetSymbolEnum> = {
+  [AssetDenomEnum.uatone]: AssetSymbolEnum.ATONE,
+  [AssetDenomEnum.uphoton]: AssetSymbolEnum.PHOTON,
 }
 
 export default {
-  nativeDenoms,
   symbolOfDenom,
-  TERRA_DECIMAL,
-  BTC_DECIMAL,
+  ATOMONE_DECIMAL,
   ETHER_BASE_DECIMAL,
 }

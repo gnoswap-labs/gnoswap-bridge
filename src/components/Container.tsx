@@ -1,13 +1,10 @@
 import { ReactElement, HTMLAttributes } from 'react'
-import styled from 'styled-components'
 
-const StyledContainer = styled.div`
-  width: 100%;
-  margin: auto;
-`
-
-const Container = (props: HTMLAttributes<HTMLDivElement>): ReactElement => {
-  return <StyledContainer {...props} />
+const Container = ({
+  className = '',
+  ...props
+}: HTMLAttributes<HTMLDivElement>): ReactElement => {
+  return <div className={`w-full mx-auto ${className}`} {...props} />
 }
 
 export default Container

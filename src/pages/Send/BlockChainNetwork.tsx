@@ -1,14 +1,13 @@
 import { ReactElement } from 'react'
-import styled from 'styled-components'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import wormholeGif from 'images/wormhole.gif'
-import ibcGif from 'images/ibc.gif'
-import shuttleGif from 'images/shuttle.gif'
 import switchSvg from 'images/switch.svg'
+import shuttleGif from 'images/shuttle.gif'
+import ibcGif from 'images/ibc.gif'
+const bridgeGifs = [shuttleGif, ibcGif]
 
 import { NETWORK } from 'consts'
 
-import { BlockChainType, BridgeType, getDefaultBridge } from 'types/network'
+import { BlockChainType } from 'types/network'
 
 import useAuth from 'hooks/useAuth'
 
@@ -16,111 +15,48 @@ import SendStore from 'store/SendStore'
 
 import SelectBlockChain from '../../components/SelectBlockChain'
 import SelectBridge from 'components/SelectBridge'
-import useUpdateBridgeType from 'hooks/useUpdateBridgeType'
 import SendProcessStore, { ProcessStatus } from 'store/SendProcessStore'
 
-const StyledNetworkBox = styled.div`
-  position: relative;
-  display: flex;
-  padding: 0 40px;
-
-  @media (max-width: 575px) {
-    padding: 0;
-  }
-`
-
-const BackgroundImg = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-
-  background-repeat: no-repeat;
-  background-size: 40% 60%;
-  background-position: 50% 50%;
-`
-
-const SwitchButton = styled.button`
-  position: absolute;
-  bottom: 0;
-  transform: translate(-50%, 50%);
-  background: transparent;
-  border: 0;
-
-  :hover {
-    cursor: pointer;
-  }
-
-  img {
-    filter: invert(94%) sepia(0%) saturate(711%) hue-rotate(223deg)
-      brightness(69%) contrast(90%);
-    width: 27px;
-    transition: all 0.3s ease-in-out;
-
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    transform: rotate(-90deg);
-
-    :hover {
-      -webkit-transform: rotate(-180deg);
-      -moz-transform: rotate(-180deg);
-      -o-transform: rotate(-180deg);
-      -ms-transform: rotate(-180deg);
-      transform: rotate(-180deg);
-    }
-  }
-`
-
 const BlockChainNetwork = (): ReactElement => {
-  const { logout } = useAuth()
   const status = useRecoilValue(SendProcessStore.sendProcessStatus)
   const [toBlockChain, setToBlockChain] = useRecoilState(SendStore.toBlockChain)
 
   const [fromBlockChain, setFromBlockChain] = useRecoilState(
     SendStore.fromBlockChain
   )
-  const [bridgeUsed, setBridgeUsed] = useRecoilState(SendStore.bridgeUsed)
-  useUpdateBridgeType()
   const { setBlockchainStorage } = useAuth()
 
   return (
-    <StyledNetworkBox>
-      <BackgroundImg
-        style={{
-          backgroundImage: ((): string => {
-            switch (bridgeUsed) {
-              case BridgeType.wormhole:
-                return `url('${wormholeGif}')`
-              case BridgeType.ibc:
-              case BridgeType.axelar:
-                return `url('${ibcGif}')`
-              default:
-                return `url('${shuttleGif}')`
-            }
-          })(),
-        }}
-      >
+    <div className="relative flex px-10 max-[575px]:px-0">
+      <div className="relative flex items-center justify-between w-full">
+        {bridgeGifs.map((gif, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 bg-no-repeat bg-center bg-[length:40%_60%] pointer-events-none"
+            style={{
+              backgroundImage: `url(${gif})`,
+              opacity: 0.4,
+              top: `${(i - 1) * 20}%`,
+            }}
+          />
+        ))}
+
         <SelectBlockChain
           {...{
             blockChain: fromBlockChain,
             setBlockChain: (value): void => {
-              logout()
               setFromBlockChain(value)
-              setToBlockChain(BlockChainType.terra)
-              setBridgeUsed(getDefaultBridge(value, BlockChainType.terra))
+              setToBlockChain(BlockChainType.atomone)
               setBlockchainStorage({
                 fromBlockChain: value,
-                toBlockChain: BlockChainType.terra,
-                bridgeUsed: getDefaultBridge(value, BlockChainType.terra),
+                toBlockChain: BlockChainType.atomone,
               })
             },
             optionList: [
               {
-                label: NETWORK.blockChainName[BlockChainType.terra],
-                value: BlockChainType.terra,
-                isDisabled: fromBlockChain === BlockChainType.terra,
+                label: NETWORK.blockChainName[BlockChainType.atomone],
+                value: BlockChainType.atomone,
+                isDisabled: fromBlockChain === BlockChainType.atomone,
               },
               {
                 label: NETWORK.blockChainName[BlockChainType.ethereum],
@@ -128,54 +64,11 @@ const BlockChainNetwork = (): ReactElement => {
                 isDisabled: fromBlockChain === BlockChainType.ethereum,
               },
               {
-                label: NETWORK.blockChainName[BlockChainType.avalanche],
-                value: BlockChainType.avalanche,
-                isDisabled: fromBlockChain === BlockChainType.avalanche,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.osmo],
-                value: BlockChainType.osmo,
-                isDisabled: fromBlockChain === BlockChainType.osmo,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.scrt],
-                value: BlockChainType.scrt,
-                isDisabled: fromBlockChain === BlockChainType.scrt,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.cosmos],
-                value: BlockChainType.cosmos,
-                isDisabled: fromBlockChain === BlockChainType.cosmos,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.juno],
-                value: BlockChainType.juno,
-                isDisabled: fromBlockChain === BlockChainType.juno,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.crescent],
-                value: BlockChainType.crescent,
-                isDisabled: fromBlockChain === BlockChainType.crescent,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.kujira],
-                value: BlockChainType.kujira,
-                isDisabled: fromBlockChain === BlockChainType.kujira,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.carbon],
-                value: BlockChainType.carbon,
-                isDisabled: fromBlockChain === BlockChainType.carbon,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.stride],
-                value: BlockChainType.stride,
-                isDisabled: fromBlockChain === BlockChainType.stride,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.migaloo],
-                value: BlockChainType.migaloo,
-                isDisabled: fromBlockChain === BlockChainType.migaloo,
+                label: `${
+                  NETWORK.blockChainName[BlockChainType.base]
+                } (paused)`,
+                value: BlockChainType.base,
+                isDisabled: true,
               },
             ],
             label: 'FROM',
@@ -184,15 +77,19 @@ const BlockChainNetwork = (): ReactElement => {
         <div style={{ height: '100%', display: 'flex', alignItems: 'start' }}>
           <SelectBridge />
           {status === ProcessStatus.Input && (
-            <SwitchButton
+            <button
+              className="absolute bottom-0 -translate-x-1/2 translate-y-1/2 bg-transparent border-0 cursor-pointer [&_img]:w-[27px] [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-in-out [&_img]:-rotate-90 [&_img]:hover:-rotate-180"
+              style={{
+                filter:
+                  'invert(94%) sepia(0%) saturate(711%) hue-rotate(223deg) brightness(69%) contrast(90%)',
+              }}
               onClick={(): void => {
                 setToBlockChain(fromBlockChain)
                 setFromBlockChain(toBlockChain)
-                logout()
               }}
             >
               <img src={switchSvg} alt="switch" />
-            </SwitchButton>
+            </button>
           )}
         </div>
         <SelectBlockChain
@@ -200,22 +97,19 @@ const BlockChainNetwork = (): ReactElement => {
             blockChain: toBlockChain,
             setBlockChain: (b): void => {
               setToBlockChain(b)
-              if (fromBlockChain !== BlockChainType.terra) {
-                setFromBlockChain(BlockChainType.terra)
-                logout()
+              if (fromBlockChain !== BlockChainType.atomone) {
+                setFromBlockChain(BlockChainType.atomone)
               }
-              setBridgeUsed(getDefaultBridge(BlockChainType.terra, b))
               setBlockchainStorage({
-                fromBlockChain: BlockChainType.terra,
+                fromBlockChain: BlockChainType.atomone,
                 toBlockChain: b,
-                bridgeUsed: getDefaultBridge(BlockChainType.terra, b),
               })
             },
             optionList: [
               {
-                label: NETWORK.blockChainName[BlockChainType.terra],
-                value: BlockChainType.terra,
-                isDisabled: toBlockChain === BlockChainType.terra,
+                label: NETWORK.blockChainName[BlockChainType.atomone],
+                value: BlockChainType.atomone,
+                isDisabled: toBlockChain === BlockChainType.atomone,
               },
               {
                 label: NETWORK.blockChainName[BlockChainType.ethereum],
@@ -223,61 +117,18 @@ const BlockChainNetwork = (): ReactElement => {
                 isDisabled: toBlockChain === BlockChainType.ethereum,
               },
               {
-                label: NETWORK.blockChainName[BlockChainType.avalanche],
-                value: BlockChainType.avalanche,
-                isDisabled: toBlockChain === BlockChainType.avalanche,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.osmo],
-                value: BlockChainType.osmo,
-                isDisabled: toBlockChain === BlockChainType.osmo,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.scrt],
-                value: BlockChainType.scrt,
-                isDisabled: toBlockChain === BlockChainType.scrt,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.cosmos],
-                value: BlockChainType.cosmos,
-                isDisabled: toBlockChain === BlockChainType.cosmos,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.juno],
-                value: BlockChainType.juno,
-                isDisabled: toBlockChain === BlockChainType.juno,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.crescent],
-                value: BlockChainType.crescent,
-                isDisabled: toBlockChain === BlockChainType.crescent,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.kujira],
-                value: BlockChainType.kujira,
-                isDisabled: fromBlockChain === BlockChainType.kujira,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.carbon],
-                value: BlockChainType.carbon,
-                isDisabled: fromBlockChain === BlockChainType.carbon,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.stride],
-                value: BlockChainType.stride,
-                isDisabled: fromBlockChain === BlockChainType.stride,
-              },
-              {
-                label: NETWORK.blockChainName[BlockChainType.migaloo],
-                value: BlockChainType.migaloo,
-                isDisabled: fromBlockChain === BlockChainType.migaloo,
+                label: `${
+                  NETWORK.blockChainName[BlockChainType.base]
+                } (paused)`,
+                value: BlockChainType.base,
+                isDisabled: true,
               },
             ],
             label: 'TO',
           }}
         />
-      </BackgroundImg>
-    </StyledNetworkBox>
+      </div>
+    </div>
   )
 }
 

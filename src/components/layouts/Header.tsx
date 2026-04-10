@@ -1,212 +1,162 @@
-import React, { ReactElement, useEffect, useState } from 'react'
-import styled, { keyframes } from 'styled-components'
+import { ReactElement, useState } from 'react'
 import { useRecoilValue } from 'recoil'
+import { NavLink } from 'react-router-dom'
 import ClickAwayListener from 'react-click-away-listener'
+import { createWalletClient, custom } from 'viem'
+import { mainnet } from 'viem/chains'
 
-import { COLOR, UTIL, STYLE } from 'consts'
+import { UTIL } from 'consts'
 
 import { Container, Text, View, Row } from 'components'
 
 import useAuth from 'hooks/useAuth'
-import useSelectWallet from 'hooks/useSelectWallet'
 
 import AuthStore from 'store/AuthStore'
 
 import bridgeLogo from 'images/bridge_logo.png'
 import WalletLogo from 'components/WalletLogo'
-import useTns from 'packages/tns/useTns'
+import { WalletEnum } from 'types/wallet'
+import { CosmosWallet, EvmWallet } from 'types/auth'
+import keplrService from 'services/keplrService'
+import metaMaskService from 'services/metaMaskService'
+import { BlockChainType } from 'types/network'
 
-const StyledContainer = styled(Container)`
-  position: relative;
-`
-const StyledNavContainer = styled(Container)`
-  max-width: 640px;
-`
-
-const StyledNav = styled(View)`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding-top: 47px;
-  padding-bottom: 19px;
-  @media ${STYLE.media.mobile} {
-    padding: 20px 24px;
-  }
-`
-
-const StyledLogo = styled(Text)`
-  font-size: 0;
-  img {
-    width: 120px;
-    height: 30px;
-  }
-  @media ${STYLE.media.mobile} {
-    img {
-      width: 104px;
-      height: 26px;
-    }
-  }
-`
-
-const StyledAddress = styled(Text)`
-  font-size: 12px;
-  font-weight: normal;
-  font-stretch: normal;
-  font-style: normal;
-  line-height: normal;
-  letter-spacing: -0.19px;
-`
-
-const StyledConnectWallet = styled(View)`
-  border-radius: 30px;
-  background-color: ${COLOR.primary};
-  font-size: 13px;
-  padding: 8px 16px;
-  cursor: pointer;
-  white-space: nowrap;
-  :hover {
-    background-color: #4983e5;
-  }
-`
-const StyledLoginUserInfoBox = styled(Row)`
-  align-items: center;
-  border-radius: ${STYLE.css.borderRadius};
-  border: solid 1px ${COLOR.terraSky};
-  font-size: 12px;
-  padding: 7px 15px;
-  cursor: pointer;
-  :hover {
-    opacity: 0.8;
-  }
-`
-
-const StyledDropdown = styled(View)`
-  position: relative;
-`
-
-const dropdownKeyframes = keyframes`
-  0% {
-    opacity: 0;
-    margin-bottom: 0;
-  }
-  
-  100% {
-    margin-bottom: -40px;
-    opacity: 1;
-  }
-`
-
-const StyledDropdownMenu = styled(View)`
-  position: absolute;
-  cursor: pointer;
-  bottom: 0;
-  height: 40px;
-  margin-bottom: -43px;
-  justify-content: center;
-  animation: ${dropdownKeyframes} 0.3s ease;
-  background-color: #484848;
-  border-radius: ${STYLE.css.borderRadius};
-  width: 100%;
-  padding: 0;
-  text-align: center;
-  :hover {
-    background-color: #494f5a;
-  }
-  z-index: 1;
-  a {
-    display: block;
-    color: ${COLOR.white};
-    padding: 12px;
-    font-size: 16px;
-    font-weight: normal;
-    font-stretch: normal;
-    font-style: normal;
-    line-height: normal;
-    letter-spacing: -0.25px;
-    border-radius: ${STYLE.css.borderRadius};
-    text-decoration: none;
-    :hover {
-      color: ${COLOR.white};
-      background-color: rgba(85, 146, 247, 0.1);
-    }
-  }
-`
-
-const LoginUserInfo = (): ReactElement => {
-  const loginUser = useRecoilValue(AuthStore.loginUser)
+const WalletBadge = ({
+  label,
+  walletEnum,
+  address,
+  onConnect,
+  onDisconnect,
+}: {
+  label: string
+  walletEnum: WalletEnum
+  address: string | null
+  onConnect: () => void
+  onDisconnect: () => void
+}): ReactElement => {
   const [isOpen, setIsOpen] = useState(false)
-  const [tnsName, setTnsName] = useState<undefined | string>(undefined)
 
-  const { logout } = useAuth()
-  const { getName } = useTns()
-
-  useEffect(() => {
-    if (!loginUser.address.startsWith('terra1')) {
-      setTnsName(undefined)
-      return
-    }
-
-    ;(async (): Promise<void> => {
-      try {
-        const name = await getName(loginUser.address)
-        setTnsName(name)
-      } catch (error) {
-        setTnsName(undefined)
-      }
-    })()
-  }, [loginUser.address])
+  if (!address) {
+    return (
+      <button
+        className="flex items-center justify-center gap-3 rounded-[14px] border border-white/20 text-lg py-3.5 px-6 min-w-[200px] cursor-pointer hover:border-bridge-sky hover:bg-white/5 bg-transparent text-white/60 transition-colors"
+        onClick={onConnect}
+      >
+        <WalletLogo walleEnum={walletEnum} size={26} />
+        <span>{label}</span>
+      </button>
+    )
+  }
 
   return (
-    <ClickAwayListener
-      onClickAway={(): void => {
-        setIsOpen(false)
-      }}
-    >
-      <StyledDropdown>
-        <StyledLoginUserInfoBox onClick={(): void => setIsOpen(!isOpen)}>
-          <WalletLogo
-            style={{ marginRight: 5 }}
-            walleEnum={loginUser.walletType}
-            size={16}
-          />
-          <StyledAddress>
-            {UTIL.truncate(tnsName || loginUser.address)}
-          </StyledAddress>
-        </StyledLoginUserInfoBox>
+    <ClickAwayListener onClickAway={(): void => setIsOpen(false)}>
+      <View className="relative">
+        <Row
+          className="items-center justify-center rounded-[14px] border border-bridge-sky text-lg py-3.5 px-6 min-w-[200px] cursor-pointer hover:opacity-80 gap-3"
+          onClick={(): void => setIsOpen(!isOpen)}
+        >
+          <WalletLogo walleEnum={walletEnum} size={26} />
+          <Text className="text-lg font-normal tracking-[-0.19px]">
+            {UTIL.truncate(address, [6, 4])}
+          </Text>
+        </Row>
 
         {isOpen && (
-          <StyledDropdownMenu>
-            <View onClick={logout}>Disconnect</View>
-          </StyledDropdownMenu>
+          <View className="absolute cursor-pointer bottom-0 h-9 -mb-[38px] justify-center bg-[#484848] rounded-[10px] w-full p-0 text-center hover:bg-[#494f5a] z-[1] animate-[dropdown_0.3s_ease] text-xs">
+            <View
+              onClick={(): void => {
+                onDisconnect()
+                setIsOpen(false)
+              }}
+            >
+              Disconnect
+            </View>
+          </View>
         )}
-      </StyledDropdown>
+      </View>
     </ClickAwayListener>
   )
 }
 
 const Header = (): ReactElement => {
-  const selectWallet = useSelectWallet()
-  const isLoggedIn = useRecoilValue(AuthStore.isLoggedIn)
+  const cosmosWallet = useRecoilValue(AuthStore.cosmosWallet)
+  const evmWallet = useRecoilValue(AuthStore.evmWallet)
+  const { loginCosmos, loginEvm, disconnectCosmos, disconnectEvm } = useAuth()
+
+  const connectKeplr = async (): Promise<void> => {
+    if (keplrService.checkInstalled()) {
+      const { address, signingCosmosClient } = await keplrService.connect(
+        BlockChainType.atomone
+      )
+      await loginCosmos({
+        address,
+        signer: signingCosmosClient,
+        walletType: WalletEnum.Keplr,
+      })
+    } else {
+      window.open('https://www.keplr.app/download', '_blank')
+    }
+  }
+
+  const connectMetaMask = async (): Promise<void> => {
+    if (metaMaskService.checkInstalled()) {
+      const { address, provider } = await metaMaskService.connect()
+      const walletClient = createWalletClient({
+        account: address as `0x${string}`,
+        chain: mainnet,
+        transport: custom(provider),
+      })
+      await loginEvm({
+        address,
+        walletClient,
+        walletType: WalletEnum.MetaMask,
+      })
+    } else {
+      metaMaskService.install()
+    }
+  }
+
+  const navLinkCls = ({ isActive }: { isActive: boolean }): string =>
+    `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      isActive
+        ? 'text-white bg-white/10'
+        : 'text-white/60 hover:text-white hover:bg-white/5'
+    }`
 
   return (
-    <StyledContainer>
-      <StyledNavContainer>
-        <StyledNav>
-          <StyledLogo>
-            <img src={bridgeLogo} alt="" />
-          </StyledLogo>
-          {isLoggedIn ? (
-            <LoginUserInfo />
-          ) : (
-            <View>
-              <StyledConnectWallet onClick={selectWallet.open}>
-                Connect Wallet
-              </StyledConnectWallet>
-            </View>
-          )}
-        </StyledNav>
-      </StyledNavContainer>
-    </StyledContainer>
+    <Container className="relative">
+      <Container className="max-w-[960px]">
+        <View className="flex-row justify-between items-center pt-[47px] pb-[19px] max-[575px]:p-5">
+          {/* Navigation */}
+          <Row className="items-center gap-1">
+            <NavLink to="/" end className={navLinkCls}>
+              Send
+            </NavLink>
+            <NavLink to="/dashboard" className={navLinkCls}>
+              Dashboard
+            </NavLink>
+          </Row>
+
+          {/* Wallet Badges */}
+          <Row className="items-center gap-2">
+            <WalletBadge
+              label="Keplr"
+              walletEnum={WalletEnum.Keplr}
+              address={cosmosWallet?.address || null}
+              onConnect={connectKeplr}
+              onDisconnect={disconnectCosmos}
+            />
+            <WalletBadge
+              label="MetaMask"
+              walletEnum={WalletEnum.MetaMask}
+              address={evmWallet?.address || null}
+              onConnect={connectMetaMask}
+              onDisconnect={disconnectEvm}
+            />
+          </Row>
+        </View>
+      </Container>
+    </Container>
   )
 }
 

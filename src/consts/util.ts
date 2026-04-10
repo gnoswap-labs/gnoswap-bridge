@@ -1,5 +1,4 @@
 import BigNumber from 'bignumber.js'
-import _ from 'lodash'
 
 import currency from './currency'
 
@@ -18,13 +17,13 @@ const jsonTryParse = <T>(value: string): T | undefined => {
 }
 
 const setComma = (str: string | number): string => {
-  const parts = _.toString(str).split('.')
+  const parts = String(str).split('.')
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return parts.join('.')
 }
 
 const delComma = (str: string | number): string => {
-  return _.toString(str).replace(/,/g, '')
+  return String(str).replace(/,/g, '')
 }
 
 const extractNumber = (str: string): string => str.replace(/\D+/g, '')
