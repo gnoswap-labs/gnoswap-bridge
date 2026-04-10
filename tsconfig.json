@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "ESNext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -9,14 +9,25 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "paths": {
+      "components/*": ["components/*"],
+      "consts/*": ["consts/*"],
+      "hooks/*": ["hooks/*"],
+      "images/*": ["images/*"],
+      "packages/*": ["packages/*"],
+      "pages/*": ["pages/*"],
+      "services/*": ["services/*"],
+      "store/*": ["store/*"],
+      "types/*": ["types/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "vite-env.d.ts"]
 }

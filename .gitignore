@@ -23,3 +23,13 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+
+# env
+.env
+
+# Vite build output
+/dist
+
+# misc tooling output
+graphify-out/
